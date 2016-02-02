@@ -2,49 +2,11 @@
 
 #include <QString>
 #include <QJsonValue>
-#include <QJsonArray>
 #include <QJsonObject>
-#include <QMap>
+#include <QList>
 #include "Vec2.h"
-
-struct MCGUIComponent;
-
-struct MCGUIContext {
-
-    QMap<QString, QJsonValue> variables;
-    QMap<QString, MCGUIComponent*>& components;
-
-};
-
-
-template <typename T>
-class MCGUIVariable {
-
-private:
-    void setVal(QJsonValue val, T def);
-
-public:
-    T val;
-    QString variableName;
-
-    MCGUIVariable() {
-        //
-    }
-    MCGUIVariable(QJsonValue val) {
-        set(val);
-    }
-
-    T get(MCGUIContext* context);
-    void setAsVariable(QString varName) {
-        this->variableName = varName;
-    }
-
-    void set(T val) {
-        this->val = val;
-    }
-    void set(QJsonValue val, T def);
-
-};
+#include "MinecraftGUIVariable.h"
+#include "MinecraftGUIBindings.h"
 
 struct MCGUIComponent {
 
@@ -103,7 +65,15 @@ struct MCGUIButtonControl {
 
 };
 
-struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonControl {
+struct MCGUIDataBindingControl {
+
+    QList<MCGUIDataBinding> bindings;
+
+    MCGUIDataBindingControl(const MCGUIComponent &component, const QJsonObject &object);
+
+};
+
+struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonControl, public MCGUIDataBindingControl {
 
     MCGUIComponentButton(const QString &mcNamespace, const QString &name, QJsonObject const &object);
 

@@ -5,7 +5,8 @@ CONFIG += c++11
 
 SOURCES += main.cpp \
     MinecraftJSONParser.cpp \
-    MinecraftGUIComponent.cpp
+    MinecraftGUIComponent.cpp \
+    MinecraftGUIVariable.cpp
 
 RESOURCES += qml.qrc
 
@@ -18,4 +19,7 @@ include(deployment.pri)
 HEADERS += \
     MinecraftJSONParser.h \
     MinecraftGUIComponent.h \
-    Vec2.h
+    Vec2.h \
+    MinecraftGUIBindings.h \
+    MinecraftGUIVariable.h \
+    MinecraftGUIContext.h
