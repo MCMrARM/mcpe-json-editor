@@ -1,12 +1,12 @@
 #include "MinecraftGUIComponent.h"
 #include "MinecraftJSONParser.h"
 
-MinecraftGUIComponent::MinecraftGUIComponent(const QString &mcNamespace, const QString &name, const QString &base) :
-    mcNamespace(mcNamespace), name(name), base(base) {
-
+MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
+    mcNamespace(mcNamespace), name(name) {
+    ignored.set(object["ignored"], false);
 }
 
-MinecraftGUIComponent::Type MinecraftGUIComponent::getTypeFromString(const QString &type) {
+MCGUIComponent::Type MCGUIComponent::getTypeFromString(const QString &type) {
     if (type == "button")
         return Type::BUTTON;
     if (type == "carousel_label")
@@ -38,19 +38,80 @@ MinecraftGUIComponent::Type MinecraftGUIComponent::getTypeFromString(const QStri
     return Type::UNKNOWN;
 }
 
-MinecraftGUIControl::MinecraftGUIControl(const QJsonObject &object) {
-    visible = object["visible"].toBool(true);
-    layer = object["layer"].toInt(0);
-    clipsChildren = object["clips_children"].toBool(false);
-    clipOffset = MinecraftJSONParser::getVec2(object["clip_offset"], {0.f, 0.f});
-    allowClipping = object["allow_clipping"].toBool(true);
-    if (object["property_bag"].isObject())
-        propertyBag = object["property_bag"].toObject();
+template <typename T>
+T MCGUIVariable<T>::get(MCGUIContext *context) {
+    if (context != nullptr && context->variables.contains(variableName)) {
+        MCGUIVariable<T> tmpVar (context->variables[variableName]);
+        return tmpVar.get(context);
+    }
+    return val;
 }
 
+template <typename T>
+void MCGUIVariable<T>::set(QJsonValue val, T def) {
+    if (val.isString()) {
+        variableName = val.toString();
+    }
+    setVal(val, def);
+}
 
-MinecraftGUIComponentButton::MinecraftGUIComponentButton(const QString &mcNamespace, const QString &name, const QString &base, const QJsonObject &object) :
-    MinecraftGUIComponent(mcNamespace, name, base),
-    MinecraftGUIControl(object) {
+template <>
+void MCGUIVariable<bool>::setVal(QJsonValue val, bool def) {
+    this->val = val.toBool(def);
+}
+template <>
+void MCGUIVariable<int>::setVal(QJsonValue val, int def) {
+    this->val = val.toInt(def);
+}
+template <>
+void MCGUIVariable<Vec2>::setVal(QJsonValue val, Vec2 def) {
+    if (val.isArray()) {
+        QJsonArray a = val.toArray();
+        this->val = {(float) a[0].toDouble(def.x), (float) a[1].toDouble(def.y)};
+        return;
+    }
+    this->val = def;
+}
+template <>
+void MCGUIVariable<MCGUIComponentVariable>::setVal(QJsonValue val, MCGUIComponentVariable def) {
+    this->val = val.toString(def.componentName);
+}
+template <>
+void MCGUIVariable<QJsonObject>::setVal(QJsonValue val, QJsonObject def) {
+    this->val = val.toObject(def);
+}
+
+MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {
+    if (context == nullptr || !context->components.contains(componentName))
+        return nullptr;
+    return context->components[componentName];
+}
+
+MCGUIComponent* MCGUIComponent::createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const QJsonObject &object) {
+    switch (type) {
+    case Type::BUTTON:
+        return new MCGUIComponentButton(mcNamespace, name, object);
+    }
+    return nullptr;
+}
+
+MCGUIControl::MCGUIControl(const MCGUIComponent &component, const QJsonObject &object) {
+    visible.set(object["visible"], true);
+    layer.set(object["layer"], 0);
+    clipsChildren.set(object["clips_children"], false);
+    clipOffset.set(object["clip_offset"], {0.f, 0.f});
+    allowClipping.set(object["allow_clipping"], true);
+    propertyBag.set(object["property_bag"], QJsonObject());
+}
+
+MCGUIButtonControl::MCGUIButtonControl(const MCGUIComponent &component, const QJsonObject &object) {
+    defaultControl.set(object["default_control"], {""});
+    hoverControl.set(object["hover_control"], {""});
+    pressedControl.set(object["pressed_control"], {""});
+}
+
+MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, object),
+    MCGUIControl(*this, object), MCGUIButtonControl(*this, object) {
     //
 }

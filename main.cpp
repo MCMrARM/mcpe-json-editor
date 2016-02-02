@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
 
     MinecraftJSONParser parser;
     parser.loadJSONFile("ui/_ui_defs.json");
+    parser.checkForMissingComponents();
 
     return app.exec();
 }

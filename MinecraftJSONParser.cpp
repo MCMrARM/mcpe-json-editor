@@ -19,12 +19,10 @@ void MinecraftJSONParser::loadJSONFile(const QString &fileName) {
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QByteArray rawData = file.readAll();
     {
-        int lineStart = 0;
         bool inString = false;
         bool hasSingleLineComment = false;
         for (int i = 0; i < rawData.length() - 1; i++) {
             if (rawData[i] == '\n') {
-                lineStart = i;
                 hasSingleLineComment = false;
                 continue;
             }
@@ -75,41 +73,77 @@ void MinecraftJSONParser::loadJSONFile(const QString &fileName) {
     QString mcNamespace = json["namespace"].toString("");
     for (auto it = json.begin(); it != json.end(); it++) {
         if (it.key() == "ui_defs") {
-            qDebug() << "JSON file list found.\n";
+            qDebug() << "JSON file list found.";
             for (auto val : it.value().toArray()) {
                 qDebug() << "Loading:" << val.toString();
                 loadJSONFile(val.toString());
             }
+        } else if (it.key() == "namespace") {
+            continue;
         } else {
             parseComponent(it.key(), mcNamespace, it->toObject());
         }
     }
 }
 
-MinecraftGUIComponent* MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object) {
+void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object) {
     qDebug() << "Parsing component:" << mcNamespace << "." << name;
 
-    MinecraftGUIComponent::Type type = MinecraftGUIComponent::getTypeFromString(object["type"].toString(""));
+    MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(object["type"].toString(""));
+
+    MCGUIComponent* component = nullptr;
 
     int i = name.indexOf('@');
     if (i >= 0) {
+        QString extendNamespace = mcNamespace;
         QString extends = name.mid(i + 1);
         name = name.mid(0, i);
-    } else {
-        if (type == MinecraftGUIComponent::Type::UNKNOWN) {
-            qDebug() << "Unknown component type!";
-            return nullptr;
+
+        i = extends.indexOf(".");
+        if (i >= 0) {
+            extendNamespace = extends.mid(0, i);
+            extends = extends.mid(i + 1);
         }
-        qDebug() << "Component type:" << (int) type;
+
+        QString nameWithNamespace = mcNamespace + "." + name;
+
+        qDebug() << "Component extends:" << extendNamespace << "." << extends;
+        requireComponent(extendNamespace + "." + extends, [nameWithNamespace, extendNamespace, extends](MCGUIComponent* component) {
+            qDebug() << "Continuing parse of component" << nameWithNamespace << ":" << (extendNamespace+"."+extends);
+        });
+    } else {
+        qDebug() << "Component type:" << (int) type << "-" << object["type"].toString("");
+
+        QString nameWithNamespace = mcNamespace + "." + name;
+
+        component = MCGUIComponent::createComponentOfType(type, mcNamespace, name, object);
+        if (component != nullptr) {
+            resolvedComponents[nameWithNamespace] = component;
+
+            if (resolveCallbacks.contains(nameWithNamespace)) {
+                qDebug() << "Calling" << resolveCallbacks[nameWithNamespace].size() << "callbacks";
+                for (ComponentCallback const& c : resolveCallbacks[nameWithNamespace]) {
+                    c(component);
+                }
+                resolveCallbacks.remove(nameWithNamespace);
+            }
+        } else {
+            qDebug() << "Failed to create component of type" << (int) type << "-" << object["type"].toString("");
+        }
     }
 }
 
-Vec2 MinecraftJSONParser::getVec2(const QJsonValue &val, Vec2 def) {
-    if (val.isArray()) {
-        QJsonArray arr = val.toArray();
-        if (arr.size() == 2) {
-            return Vec2 { (float) arr[0].toDouble(), (float) arr[1].toDouble() };
-        }
+void MinecraftJSONParser::requireComponent(const QString &name, ComponentCallback callback) {
+    if (resolvedComponents.contains(name)) {
+        callback(resolvedComponents[name]);
+        return;
     }
-    return def;
+    resolveCallbacks[name].append(callback);
+}
+
+void MinecraftJSONParser::checkForMissingComponents() {
+    for (auto it = resolveCallbacks.begin(); it != resolveCallbacks.end(); it++) {
+        qDebug() << "Unresolved callbacks for" << it.key() << "(" << it->count() << ")";
+    }
+    abort();
 }

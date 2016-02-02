@@ -2,20 +2,27 @@
 
 #include <QString>
 #include <QMap>
+#include <QList>
+#include <functional>
 #include "Vec2.h"
 class QJsonValue;
 class QJsonObject;
-class MinecraftGUIComponent;
+class MCGUIComponent;
 
 class MinecraftJSONParser
 {
 public:
+    typedef std::function<void (MCGUIComponent* component)> ComponentCallback;
+
     MinecraftJSONParser();
 
-    QMap<QString, MinecraftGUIComponent*> resolvedComponents;
+    QMap<QString, MCGUIComponent*> resolvedComponents;
+    QMap<QString, QList<ComponentCallback>> resolveCallbacks;
 
     void loadJSONFile(const QString &file);
-    MinecraftGUIComponent* parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object);
+    void parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object);
 
-    static Vec2 getVec2(const QJsonValue &val, Vec2 def);
+    void requireComponent(const QString& name, ComponentCallback callback);
+
+    void checkForMissingComponents();
 };
