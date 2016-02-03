@@ -1,6 +1,7 @@
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIContext.h"
 #include "MinecraftGUIComponent.h"
+#include <QString>
 #include <QJsonArray>
 #include "Vec2.h"
 
@@ -33,6 +34,10 @@ void MCGUIVariable<Vec2>::setVal(QJsonValue val, Vec2 def) {
 template <>
 void MCGUIVariable<MCGUIComponentVariable>::setVal(QJsonValue val, MCGUIComponentVariable def) {
     this->val = val.toString(def.componentName);
+}
+template <>
+void MCGUIVariable<QString>::setVal(QJsonValue val, QString def) {
+    this->val = val.toString(def);
 }
 template <>
 void MCGUIVariable<QJsonObject>::setVal(QJsonValue val, QJsonObject def) {

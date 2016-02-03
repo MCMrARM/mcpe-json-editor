@@ -10,6 +10,10 @@ class MCGUIContext {
 
 public:
     QMap<QString, QJsonValue> variables;
+    QList<QMap<QString, QJsonValue>> prevVariables;
     QMap<QString, MCGUIComponent*>& components;
+
+    void enter(MCGUIComponent* component);
+    void exit();
 
 };

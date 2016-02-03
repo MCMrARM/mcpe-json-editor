@@ -5,6 +5,12 @@
 MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name) {
     ignored.set(object["ignored"], false);
+    if (object["variables"].isObject()) {
+        QJsonObject o = object["variables"].toObject();
+        for (auto it = o.begin(); it != o.end(); it++) {
+            variables[it.key()] = *it;
+        }
+    }
 }
 
 MCGUIComponent::Type MCGUIComponent::getTypeFromString(const QString &type) {

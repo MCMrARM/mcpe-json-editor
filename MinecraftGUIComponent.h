@@ -4,6 +4,7 @@
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QList>
+#include <QMap>
 #include "Vec2.h"
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIBindings.h"
@@ -19,6 +20,7 @@ struct MCGUIComponent {
     MCGUIComponent* base = nullptr;
     Type type;
     MCGUIVariable<bool> ignored;
+    QMap<QString, QJsonValue> variables;
 
     MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object);
 

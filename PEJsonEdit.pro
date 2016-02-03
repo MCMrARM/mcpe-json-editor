@@ -6,7 +6,8 @@ CONFIG += c++11
 SOURCES += main.cpp \
     MinecraftJSONParser.cpp \
     MinecraftGUIComponent.cpp \
-    MinecraftGUIVariable.cpp
+    MinecraftGUIVariable.cpp \
+    MinecraftGUIContext.cpp
 
 RESOURCES += qml.qrc
 
