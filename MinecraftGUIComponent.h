@@ -15,12 +15,21 @@ struct MCGUIComponent {
         BUTTON, CAROUSEL_LABEL, CUSTOM, EDIT_BOX, GRID, GRID_ITEM, IMAGE, INPUT_PANEL, LABEL, PANEL, SCREEN, SCROLLBAR, SCROLLBAR_BOX, TAB, UNKNOWN
     };
 
+    struct Variables {
+
+        QString requires;
+        QMap<QString, QJsonValue> vars;
+
+        Variables(QJsonObject const &o);
+
+    };
+
     QString mcNamespace;
     QString name;
     MCGUIComponent* base = nullptr;
     Type type;
     MCGUIVariable<bool> ignored;
-    QMap<QString, QJsonValue> variables;
+    QList<Variables> variables;
 
     MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object);
 

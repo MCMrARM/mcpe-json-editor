@@ -1,15 +1,28 @@
 #include "MinecraftGUIComponent.h"
 #include "MinecraftGUIContext.h"
 #include "MinecraftJSONParser.h"
+#include <QJsonArray>
 
 MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name) {
     ignored.set(object["ignored"], false);
     if (object["variables"].isObject()) {
-        QJsonObject o = object["variables"].toObject();
-        for (auto it = o.begin(); it != o.end(); it++) {
-            variables[it.key()] = *it;
+        variables.push_back(Variables(object["variables"].toObject()));
+    } else if (object["variables"].isArray()) {
+        QJsonArray vars = object["variables"].toArray();
+        for (QJsonValue const& v : vars) {
+            if (v.isObject())
+                variables.push_back(Variables(v.toObject()));
         }
+    }
+}
+
+MCGUIComponent::Variables::Variables(const QJsonObject &o) {
+    requires = o["requires"].toString("");
+    for (auto it = o.begin(); it != o.end(); it++) {
+        if (it.key() == "requires")
+            continue;
+        vars[it.key()] = *it;
     }
 }
 
