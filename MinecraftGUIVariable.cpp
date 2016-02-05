@@ -77,8 +77,8 @@ void MCGUIVariable<MCGUILayoutOffset>::setVal(QJsonValue val, MCGUILayoutOffset 
     if (val.isArray()) {
         QJsonArray a = val.toArray();
         if (a.size() >= 2) {
-            this->val.x.set(a[0].toString(""));
-            this->val.y.set(a[1].toString(""));
+            this->val.x.set(a[0]);
+            this->val.y.set(a[1]);
             return;
         }
     }

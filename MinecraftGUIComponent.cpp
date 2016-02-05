@@ -5,9 +5,9 @@
 #include <QRegularExpression>
 #include <QDebug>
 
-MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
+MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name) {
-    ignored.set(object["ignored"], false);
+    ignored.setJSON(object["ignored"], false);
     if (object["variables"].isObject()) {
         variables.push_back(Variables(object["variables"].toObject()));
     } else if (object["variables"].isArray()) {
@@ -15,6 +15,15 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
         for (QJsonValue const& v : vars) {
             if (v.isObject())
                 variables.push_back(Variables(v.toObject()));
+        }
+    }
+    if (object["controls"].isObject()) {
+        QJsonObject o = object["controls"].toObject();
+        for (auto i = o.begin(); i != o.end(); i++) {
+            parser.parseComponent(i.key(), mcNamespace, i->toObject(), [this](MCGUIComponent* component) {
+                if (component != nullptr)
+                    controls.push_back(component);
+            });
         }
     }
 }
@@ -60,32 +69,75 @@ MCGUIComponent::Type MCGUIComponent::getTypeFromString(const QString &type) {
     return Type::UNKNOWN;
 }
 
-MCGUIComponent* MCGUIComponent::createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const QJsonObject &object) {
+MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) {
     switch (type) {
     case Type::BUTTON:
-        return new MCGUIComponentButton(mcNamespace, name, object);
+        return new MCGUIComponentButton(parser, mcNamespace, name, base, object);
     case Type::PANEL:
-        return new MCGUIComponentPanel(mcNamespace, name, object);
+        return new MCGUIComponentPanel(parser, mcNamespace, name, base, object);
     }
     return nullptr;
 }
 
-MCGUIControl::MCGUIControl(const MCGUIComponent &component, const QJsonObject &object) {
-    visible.set(object["visible"], true);
-    layer.set(object["layer"], 0);
-    clipsChildren.set(object["clips_children"], false);
-    clipOffset.set(object["clip_offset"], {0.f, 0.f});
-    allowClipping.set(object["allow_clipping"], true);
-    propertyBag.set(object["property_bag"], QJsonObject());
+#define MCGUIIsOfBaseType_Control(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::GRID_ITEM || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_ButtonComponent(el) (el->type == MCGUIComponent::Type::BUTTON)
+#define MCGUIIsOfBaseType_DataBindingComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCREEN || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_LayoutComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::GRID_ITEM || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
+#define MCGUICopyBaseProperties(base, type) \
+    if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
+        *this = *((MCGUI##type*) base);
+
+MCGUIControl::MCGUIControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : clipOffset({0.f, 0.f}) {
+    MCGUICopyBaseProperties(base, Control);
+    visible.setJSON(object["visible"]);
+    layer.setJSON(object["layer"]);
+    clipsChildren.setJSON(object["clips_children"]);
+    clipOffset.setJSON(object["clip_offset"]);
+    allowClipping.setJSON(object["allow_clipping"]);
+    propertyBag.setJSON(object["property_bag"]);
 }
 
-MCGUIButtonControl::MCGUIButtonControl(const MCGUIComponent &component, const QJsonObject &object) {
-    defaultControl.set(object["default_control"], {""});
-    hoverControl.set(object["hover_control"], {""});
-    pressedControl.set(object["pressed_control"], {""});
+MCGUIButtonComponent::MCGUIButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, ButtonComponent);
+    defaultControl.setJSON(object["default_control"]);
+    hoverControl.setJSON(object["hover_control"]);
+    pressedControl.setJSON(object["pressed_control"]);
 }
 
-MCGUIDataBindingControl::MCGUIDataBindingControl(const MCGUIComponent &component, const QJsonObject &object) {
+MCGUIDataBindingComponent::MCGUIDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, DataBindingComponent);
 
 }
 
@@ -111,6 +163,11 @@ float MCGUILayoutAxis::get(const MCGUIContext *context) {
            retVal += (c.value * componentSize.y);
        }
    }
+   return retVal;
+}
+
+void MCGUILayoutAxis::set(const QJsonValue &obj) {
+    set(obj.toString(""));
 }
 
 void MCGUILayoutAxis::set(const QString &str) {
@@ -145,24 +202,25 @@ void MCGUILayoutAxis::set(const QString &str) {
     }
 }
 
-MCGUILayoutControl::MCGUILayoutControl(const MCGUIComponent &component, const QJsonObject &object) {
-    anchorFrom.set(object["anchor_from"], MCGUIAnchorPoint::CENTER);
-    anchorTo.set(object["anchor_to"], MCGUIAnchorPoint::CENTER);
-    draggable.set(object["draggable"], MCGUIDraggable::NOT_DRAGGABLE);
-    followsCursor.set(object["follows_cursor"], false);
-    offset.set(object["offset"], MCGUILayoutOffset());
-    size.set(object["size"], MCGUILayoutOffset());
+MCGUILayoutComponent::MCGUILayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, LayoutComponent);
+    anchorFrom.setJSON(object["anchor_from"]);
+    anchorTo.setJSON(object["anchor_to"]);
+    draggable.setJSON(object["draggable"]);
+    followsCursor.setJSON(object["follows_cursor"]);
+    offset.setJSON(object["offset"]);
+    size.setJSON(object["size"]);
 }
 
-MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, object),
-    MCGUIControl(*this, object), MCGUIButtonControl(*this, object), MCGUIDataBindingControl(*this, object), MCGUILayoutControl(*this, object) {
+MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, base, object),
+    MCGUIControl(*this, base, object), MCGUIButtonComponent(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentPanel::MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, object),
-    MCGUIControl(*this, object), MCGUIDataBindingControl(*this, object), MCGUILayoutControl(*this, object) {
+MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, base, object),
+    MCGUIControl(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
     //
 }
 

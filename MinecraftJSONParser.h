@@ -20,8 +20,10 @@ public:
     QMap<QString, QList<ComponentCallback>> resolveCallbacks;
 
     void loadJSONFile(const QString &file);
-    void parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object);
+    void parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object, ComponentCallback parseCallback);
+    void parseAndRegisterComponent(QString name, const QString &mcNamespace, const QJsonObject &object);
 
+    void registerComponent(MCGUIComponent* component);
     void requireComponent(const QString& name, ComponentCallback callback);
 
     void checkForMissingComponents();

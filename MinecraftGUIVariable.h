@@ -17,8 +17,12 @@ public:
     MCGUIVariable() {
         //
     }
+    MCGUIVariable(T val) {
+        set(val);
+    }
+
     MCGUIVariable(QJsonValue val, T def) {
-        set(val, def);
+        setJSON(val, def);
     }
     T get(const MCGUIContext *context) {
         if (context != nullptr && context->variables.contains(variableName)) {
@@ -34,7 +38,10 @@ public:
     void set(T val) {
         this->val = val;
     }
-    void set(QJsonValue val, T def) {
+    void setJSON(QJsonValue val) {
+        setJSON(val, this->val);
+    }
+    void setJSON(QJsonValue val, T def) {
         if (val.isString()) {
             variableName = val.toString();
         }

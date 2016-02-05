@@ -9,6 +9,8 @@
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIBindings.h"
 
+class MinecraftJSONParser;
+
 struct MCGUIComponent {
 
     enum class Type {
@@ -30,11 +32,12 @@ struct MCGUIComponent {
     Type type;
     MCGUIVariable<bool> ignored;
     QList<Variables> variables;
+    QList<MCGUIComponent*> controls;
 
-    MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object);
+    MCGUIComponent(MinecraftJSONParser& parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object);
 
     static Type getTypeFromString(const QString& type);
-    static MCGUIComponent* createComponentOfType(Type type, const QString &mcNamespace, const QString &name, QJsonObject const &object);
+    static MCGUIComponent* createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) = 0;
 
@@ -57,32 +60,32 @@ struct MCGUIComponentVariable {
 
 struct MCGUIControl {
 
-    MCGUIVariable<bool> visible;
-    MCGUIVariable<int> layer;
-    MCGUIVariable<bool> clipsChildren;
+    MCGUIVariable<bool> visible = true;
+    MCGUIVariable<int> layer = 0;
+    MCGUIVariable<bool> clipsChildren = false;
     MCGUIVariable<Vec2> clipOffset;
-    MCGUIVariable<bool> allowClipping;
+    MCGUIVariable<bool> allowClipping = true;
     MCGUIVariable<QJsonObject> propertyBag;
 
-    MCGUIControl(const MCGUIComponent &component, const QJsonObject &object);
+    MCGUIControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIButtonControl {
+struct MCGUIButtonComponent {
 
     MCGUIVariable<MCGUIComponentVariable> defaultControl;
     MCGUIVariable<MCGUIComponentVariable> hoverControl;
     MCGUIVariable<MCGUIComponentVariable> pressedControl;
 
-    MCGUIButtonControl(const MCGUIComponent &component, const QJsonObject &object);
+    MCGUIButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIDataBindingControl {
+struct MCGUIDataBindingComponent {
 
     QList<MCGUIDataBinding> bindings;
 
-    MCGUIDataBindingControl(const MCGUIComponent &component, const QJsonObject &object);
+    MCGUIDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
@@ -128,6 +131,7 @@ struct MCGUILayoutAxis {
     float get(const MCGUIContext *context);
 
     void set(const QString &str);
+    void set(const QJsonValue &obj);
 
 };
 
@@ -141,28 +145,29 @@ struct MCGUILayoutOffset {
 
 };
 
-struct MCGUILayoutControl {
+struct MCGUILayoutComponent {
 
-    MCGUIVariable<MCGUIAnchorPoint> anchorFrom, anchorTo;
-    MCGUIVariable<MCGUIDraggable> draggable;
-    MCGUIVariable<bool> followsCursor;
+    MCGUIVariable<MCGUIAnchorPoint> anchorFrom = MCGUIAnchorPoint::CENTER;
+    MCGUIVariable<MCGUIAnchorPoint> anchorTo = MCGUIAnchorPoint::CENTER;
+    MCGUIVariable<MCGUIDraggable> draggable = MCGUIDraggable::NOT_DRAGGABLE;
+    MCGUIVariable<bool> followsCursor = false;
     MCGUIAnimatedVariable<MCGUILayoutOffset> offset, size;
 
-    MCGUILayoutControl(const MCGUIComponent &component, const QJsonObject &object);
+    MCGUILayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonControl, public MCGUIDataBindingControl, public MCGUILayoutControl {
+struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonComponent, public MCGUIDataBindingComponent, public MCGUILayoutComponent {
 
-    MCGUIComponentButton(const QString &mcNamespace, const QString &name, QJsonObject const &object);
+    MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
 
 };
 
-struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIControl, public MCGUIDataBindingControl, public MCGUILayoutControl {
+struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIControl, public MCGUIDataBindingComponent, public MCGUILayoutComponent {
 
-    MCGUIComponentPanel(const QString &mcNamespace, const QString &name, QJsonObject const &object);
+    MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
 

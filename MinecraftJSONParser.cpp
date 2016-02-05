@@ -81,17 +81,15 @@ void MinecraftJSONParser::loadJSONFile(const QString &fileName) {
         } else if (it.key() == "namespace") {
             continue;
         } else {
-            parseComponent(it.key(), mcNamespace, it->toObject());
+            parseAndRegisterComponent(it.key(), mcNamespace, it->toObject());
         }
     }
 }
 
-void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object) {
+void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespace, const QJsonObject &object, ComponentCallback callback) {
     qDebug() << "Parsing component:" << mcNamespace << "." << name;
 
     MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(object["type"].toString(""));
-
-    MCGUIComponent* component = nullptr;
 
     int i = name.indexOf('@');
     if (i >= 0) {
@@ -108,28 +106,46 @@ void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespac
         QString nameWithNamespace = mcNamespace + "." + name;
 
         qDebug() << "Component extends:" << extendNamespace << "." << extends;
-        requireComponent(extendNamespace + "." + extends, [nameWithNamespace, extendNamespace, extends](MCGUIComponent* component) {
+        requireComponent(extendNamespace + "." + extends, [this, nameWithNamespace, extendNamespace, mcNamespace, name, extends, type, object, callback](MCGUIComponent* component) {
             qDebug() << "Continuing parse of component" << nameWithNamespace << ":" << (extendNamespace+"."+extends);
+
+            if (type != component->type) {
+                qDebug() << "Component type mismatch" << (int) type << "vs" << (int) component->type;
+                return;
+            }
+
+            MCGUIComponent *newComponent = MCGUIComponent::createComponentOfType(*this, type, mcNamespace, name, component, object);
+            callback(newComponent);
         });
     } else {
         qDebug() << "Component type:" << (int) type << "-" << object["type"].toString("");
 
         QString nameWithNamespace = mcNamespace + "." + name;
 
-        component = MCGUIComponent::createComponentOfType(type, mcNamespace, name, object);
-        if (component != nullptr) {
-            resolvedComponents[nameWithNamespace] = component;
+        MCGUIComponent *component = MCGUIComponent::createComponentOfType(*this, type, mcNamespace, name, nullptr, object);
+        callback(component);
+    }
+}
 
-            if (resolveCallbacks.contains(nameWithNamespace)) {
-                qDebug() << "Calling" << resolveCallbacks[nameWithNamespace].size() << "callbacks";
-                for (ComponentCallback const& c : resolveCallbacks[nameWithNamespace]) {
-                    c(component);
-                }
-                resolveCallbacks.remove(nameWithNamespace);
-            }
-        } else {
-            qDebug() << "Failed to create component of type" << (int) type << "-" << object["type"].toString("");
+void MinecraftJSONParser::parseAndRegisterComponent(QString name, const QString &mcNamespace, const QJsonObject &object) {
+    parseComponent(name, mcNamespace, object, [this](MCGUIComponent* component) {
+        if (component != nullptr) {
+            registerComponent(component);
         }
+    });
+}
+
+void MinecraftJSONParser::registerComponent(MCGUIComponent *component) {
+    QString nameWithNamespace = component->mcNamespace + "." + component->name;
+
+    resolvedComponents[nameWithNamespace] = component;
+
+    if (resolveCallbacks.contains(nameWithNamespace)) {
+        qDebug() << "Calling" << resolveCallbacks[nameWithNamespace].size() << "callbacks";
+        for (ComponentCallback const& c : resolveCallbacks[nameWithNamespace]) {
+            c(component);
+        }
+        resolveCallbacks.remove(nameWithNamespace);
     }
 }
 
