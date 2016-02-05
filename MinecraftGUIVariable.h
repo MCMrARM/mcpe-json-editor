@@ -2,8 +2,7 @@
 
 #include <QString>
 #include <QJsonValue>
-
-class MCGUIContext;
+#include "MinecraftGUIContext.h"
 
 template <typename T>
 class MCGUIVariable {
@@ -18,11 +17,16 @@ public:
     MCGUIVariable() {
         //
     }
-    MCGUIVariable(QJsonValue val) {
-        set(val);
+    MCGUIVariable(QJsonValue val, T def) {
+        set(val, def);
     }
-
-    T get(MCGUIContext* context);
+    T get(const MCGUIContext *context) {
+        if (context != nullptr && context->variables.contains(variableName)) {
+            MCGUIVariable<T> tmpVar (context->variables[variableName], val);
+            return tmpVar.get(context);
+        }
+        return val;
+    }
     void setAsVariable(QString varName) {
         this->variableName = varName;
     }
@@ -35,6 +39,18 @@ public:
             variableName = val.toString();
         }
         setVal(val, def);
+    }
+
+};
+
+template <typename T>
+class MCGUIAnimatedVariable : public MCGUIVariable<T> {
+
+public:
+    MCGUIAnimatedVariable() : MCGUIVariable<T>() {
+        //
+    }
+    MCGUIAnimatedVariable(QJsonValue val) : MCGUIVariable<T>(val) {
     }
 
 };

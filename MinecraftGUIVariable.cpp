@@ -5,15 +5,6 @@
 #include <QJsonArray>
 #include "Vec2.h"
 
-template <typename T>
-T MCGUIVariable<T>::get(MCGUIContext *context) {
-    if (context != nullptr && context->variables.contains(variableName)) {
-        MCGUIVariable<T> tmpVar (context->variables[variableName]);
-        return tmpVar.get(context);
-    }
-    return val;
-}
-
 template <>
 void MCGUIVariable<bool>::setVal(QJsonValue val, bool def) {
     this->val = val.toBool(def);
@@ -42,6 +33,56 @@ void MCGUIVariable<QString>::setVal(QJsonValue val, QString def) {
 template <>
 void MCGUIVariable<QJsonObject>::setVal(QJsonValue val, QJsonObject def) {
     this->val = val.toObject(def);
+}
+template <>
+void MCGUIVariable<MCGUIAnchorPoint>::setVal(QJsonValue val, MCGUIAnchorPoint def) {
+    QString v = val.toString("");
+    if (v == "top_left")
+        this->val = MCGUIAnchorPoint::TOP_LEFT;
+    else if (v == "top_middle")
+        this->val = MCGUIAnchorPoint::TOP_MIDDLE;
+    else if (v == "top_right")
+        this->val = MCGUIAnchorPoint::TOP_RIGHT;
+    else if (v == "left_middle")
+        this->val = MCGUIAnchorPoint::LEFT_MIDDLE;
+    else if (v == "center")
+        this->val = MCGUIAnchorPoint::CENTER;
+    else if (v == "right_middle")
+        this->val = MCGUIAnchorPoint::RIGHT_MIDDLE;
+    else if (v == "bottom_left")
+        this->val = MCGUIAnchorPoint::BOTTOM_LEFT;
+    else if (v == "bottom_middle")
+        this->val = MCGUIAnchorPoint::BOTTOM_MIDDLE;
+    else if (v == "bottom_right")
+        this->val = MCGUIAnchorPoint::BOTTOM_RIGHT;
+    else
+        this->val = def;
+}
+template <>
+void MCGUIVariable<MCGUIDraggable>::setVal(QJsonValue val, MCGUIDraggable def) {
+    QString v = val.toString("");
+    if (v == "not_draggable")
+        this->val = MCGUIDraggable::NOT_DRAGGABLE;
+    else if (v == "horizontal")
+        this->val = MCGUIDraggable::HORIZONTAL;
+    else if (v == "vertical")
+        this->val = MCGUIDraggable::VERTICAL;
+    else if (v == "both")
+        this->val = MCGUIDraggable::BOTH;
+    else
+        this->val = def;
+}
+template <>
+void MCGUIVariable<MCGUILayoutOffset>::setVal(QJsonValue val, MCGUILayoutOffset def) {
+    if (val.isArray()) {
+        QJsonArray a = val.toArray();
+        if (a.size() >= 2) {
+            this->val.x.set(a[0].toString(""));
+            this->val.y.set(a[1].toString(""));
+            return;
+        }
+    }
+    this->val = def;
 }
 
 MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {

@@ -2,6 +2,7 @@
 #include "MinecraftGUIComponent.h"
 
 void MCGUIContext::enter(MCGUIComponent *component) {
+    componentStack.push_back(component);
     prevVariables.push_back(QMap<QString, QJsonValue>());
     QMap<QString, QJsonValue>& map = prevVariables.last();
     for (MCGUIComponent::Variables varSet : component->variables) {
@@ -29,4 +30,5 @@ void MCGUIContext::exit() {
             variables[it.key()] = *it;
     }
     prevVariables.pop_back();
+    componentStack.pop_back();
 }

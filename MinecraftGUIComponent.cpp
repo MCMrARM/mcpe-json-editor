@@ -2,6 +2,8 @@
 #include "MinecraftGUIContext.h"
 #include "MinecraftJSONParser.h"
 #include <QJsonArray>
+#include <QRegularExpression>
+#include <QDebug>
 
 MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name) {
@@ -62,6 +64,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(Type type, const QString &
     switch (type) {
     case Type::BUTTON:
         return new MCGUIComponentButton(mcNamespace, name, object);
+    case Type::PANEL:
+        return new MCGUIComponentPanel(mcNamespace, name, object);
     }
     return nullptr;
 }
@@ -82,11 +86,83 @@ MCGUIButtonControl::MCGUIButtonControl(const MCGUIComponent &component, const QJ
 }
 
 MCGUIDataBindingControl::MCGUIDataBindingControl(const MCGUIComponent &component, const QJsonObject &object) {
-    //
+
+}
+
+float MCGUILayoutAxis::get(const MCGUIContext *context) {
+   MCGUIComponent* component = nullptr;
+   Vec2 componentSize;
+   if (context != nullptr && context->componentStack.size() > 0) {
+       if (context->componentStack.size() > 1) {
+           component = context->componentStack[context->componentStack.size() - 2];
+       } else {
+           component = context->componentStack.last();
+       }
+       componentSize = component->calculateSize(context);
+   }
+
+   float retVal = 0.f;
+   for (Component const& c : components) {
+       if (c.unit == Component::Unit::PIXELS) {
+           retVal += c.value;
+       } else if (c.unit == Component::Unit::PERCENT_X) {
+           retVal += (c.value * componentSize.x);
+       } else if (c.unit == Component::Unit::PERCENT_Y) {
+           retVal += (c.value * componentSize.y);
+       }
+   }
+}
+
+void MCGUILayoutAxis::set(const QString &str) {
+    QString s = str;
+    if (s.size() <= 0)
+        return;
+    s.replace(" ", "");
+    QStringList a = s.split(QRegularExpression("(?=\\-|\\+)"));
+    components.clear();
+    for (QString p : a) {
+        if (p.length() <= 0)
+            continue;
+        int i = p.indexOf("%");
+        Component c;
+        if (i >= 0) {
+            c.value = p.midRef(0, i).toFloat() / 100.f;
+            if (p.endsWith("x"))
+                c.unit = Component::Unit::PERCENT_X;
+            else if (p.endsWith("y"))
+                c.unit = Component::Unit::PERCENT_Y;
+            else
+                c.unit = (axis == Axis::X ? Component::Unit::PERCENT_X : Component::Unit::PERCENT_Y);
+        } else {
+            if (p.endsWith("px"))
+                c.value = p.midRef(0, p.length() - 2).toFloat();
+            else
+                c.value = p.toFloat();
+
+            c.unit = Component::Unit::PIXELS;
+        }
+        components.push_back(c);
+    }
+}
+
+MCGUILayoutControl::MCGUILayoutControl(const MCGUIComponent &component, const QJsonObject &object) {
+    anchorFrom.set(object["anchor_from"], MCGUIAnchorPoint::CENTER);
+    anchorTo.set(object["anchor_to"], MCGUIAnchorPoint::CENTER);
+    draggable.set(object["draggable"], MCGUIDraggable::NOT_DRAGGABLE);
+    followsCursor.set(object["follows_cursor"], false);
+    offset.set(object["offset"], MCGUILayoutOffset());
+    size.set(object["size"], MCGUILayoutOffset());
 }
 
 MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
     MCGUIComponent(mcNamespace, name, object),
-    MCGUIControl(*this, object), MCGUIButtonControl(*this, object), MCGUIDataBindingControl(*this, object) {
+    MCGUIControl(*this, object), MCGUIButtonControl(*this, object), MCGUIDataBindingControl(*this, object), MCGUILayoutControl(*this, object) {
     //
 }
+
+MCGUIComponentPanel::MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, object),
+    MCGUIControl(*this, object), MCGUIDataBindingControl(*this, object), MCGUILayoutControl(*this, object) {
+    //
+}
+

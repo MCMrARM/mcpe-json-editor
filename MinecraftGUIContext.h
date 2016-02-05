@@ -12,6 +12,7 @@ public:
     QMap<QString, QJsonValue> variables;
     QList<QMap<QString, QJsonValue>> prevVariables;
     QMap<QString, MCGUIComponent*>& components;
+    QList<MCGUIComponent*> componentStack;
 
     void enter(MCGUIComponent* component);
     void exit();
