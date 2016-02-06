@@ -136,9 +136,9 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
-        *this = *(MCGUICastToType(base, MCGUI##type));
+        *this = *(MCGUICastToType(base, MCGUIBase##type));
 
-MCGUIControl::MCGUIControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : clipOffset({0.f, 0.f}) {
+MCGUIBaseControl::MCGUIBaseControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : clipOffset({0.f, 0.f}) {
     MCGUICopyBaseProperties(base, Control);
     visible.setJSON(object["visible"]);
     layer.setJSON(object["layer"]);
@@ -148,14 +148,14 @@ MCGUIControl::MCGUIControl(const MCGUIComponent &component, const MCGUIComponent
     propertyBag.setJSON(object["property_bag"]);
 }
 
-MCGUIButtonComponent::MCGUIButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseButtonComponent::MCGUIBaseButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, ButtonComponent);
     defaultControl.setJSON(object["default_control"]);
     hoverControl.setJSON(object["hover_control"]);
     pressedControl.setJSON(object["pressed_control"]);
 }
 
-MCGUIDataBindingComponent::MCGUIDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseDataBindingComponent::MCGUIBaseDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, DataBindingComponent);
 
 }
@@ -221,7 +221,7 @@ void MCGUILayoutAxis::set(const QString &str) {
     }
 }
 
-MCGUILayoutComponent::MCGUILayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseLayoutComponent::MCGUIBaseLayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, LayoutComponent);
     anchorFrom.setJSON(object["anchor_from"]);
     anchorTo.setJSON(object["anchor_to"]);
@@ -231,7 +231,7 @@ MCGUILayoutComponent::MCGUILayoutComponent(const MCGUIComponent &component, cons
     size.setJSON(object["size"]);
 }
 
-MCGUIInputComponent::MCGUIInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseInputComponent::MCGUIBaseInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, InputComponent);
     scrollReport.setJSON(object["scroll_report"]);
     alwaysListenToInput.setJSON(object["always_listen_to_input"]);
@@ -241,7 +241,7 @@ MCGUIInputComponent::MCGUIInputComponent(const MCGUIComponent &component, const 
     contentPanel.setJSON(object["content_panel"]);
 }
 
-MCGUISoundComponent::MCGUISoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseSoundComponent::MCGUIBaseSoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, SoundComponent);
     soundName.setJSON(object["sound_name"]);
     soundVolume.setJSON(object["sound_volume"]);
@@ -250,13 +250,13 @@ MCGUISoundComponent::MCGUISoundComponent(const MCGUIComponent &component, const 
 
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
-    MCGUIControl(*this, base, object), MCGUIButtonComponent(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object), MCGUIInputComponent(*this, base, object), MCGUISoundComponent(*this, base, object) {
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::PANEL, base, object),
-    MCGUIControl(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 

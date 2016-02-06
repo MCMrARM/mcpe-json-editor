@@ -43,7 +43,7 @@ struct MCGUIComponent {
 
 };
 
-struct MCGUIControl {
+struct MCGUIBaseControl {
 
     MCGUIVariable<bool> visible = true;
     MCGUIVariable<int> layer = 0;
@@ -52,25 +52,15 @@ struct MCGUIControl {
     MCGUIVariable<bool> allowClipping = true;
     MCGUIVariable<QJsonObject> propertyBag;
 
-    MCGUIControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIBaseControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIButtonComponent {
-
-    MCGUIVariable<MCGUIControlVariable> defaultControl;
-    MCGUIVariable<MCGUIControlVariable> hoverControl;
-    MCGUIVariable<MCGUIControlVariable> pressedControl;
-
-    MCGUIButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
-
-};
-
-struct MCGUIDataBindingComponent {
+struct MCGUIBaseDataBindingComponent {
 
     QList<MCGUIDataBinding> bindings;
 
-    MCGUIDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIBaseDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
@@ -130,7 +120,7 @@ struct MCGUILayoutOffset {
 
 };
 
-struct MCGUILayoutComponent {
+struct MCGUIBaseLayoutComponent {
 
     MCGUIVariable<MCGUIAnchorPoint> anchorFrom = MCGUIAnchorPoint::CENTER;
     MCGUIVariable<MCGUIAnchorPoint> anchorTo = MCGUIAnchorPoint::CENTER;
@@ -138,11 +128,11 @@ struct MCGUILayoutComponent {
     MCGUIVariable<bool> followsCursor = false;
     MCGUIAnimatedVariable<MCGUILayoutOffset> offset, size;
 
-    MCGUILayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIBaseLayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIInputComponent {
+struct MCGUIBaseInputComponent {
 
     // TODO: Keymappings
     MCGUIVariable<QList<MCGUIComponentVariable>> scrollReport;
@@ -152,21 +142,31 @@ struct MCGUIInputComponent {
     MCGUIVariable<bool> alwaysHandlePointer = false;
     MCGUIVariable<MCGUIComponentVariable> contentPanel;
 
-    MCGUIInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIBaseInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUISoundComponent {
+struct MCGUIBaseSoundComponent {
 
     MCGUIVariable<QString> soundName;
     MCGUIVariable<float> soundVolume = 1.f;
     MCGUIVariable<float> soundPitch = 1.f;
 
-    MCGUISoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIBaseSoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
-struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonComponent, public MCGUIDataBindingComponent, public MCGUILayoutComponent, public MCGUIInputComponent, public MCGUISoundComponent {
+struct MCGUIBaseButtonComponent {
+
+    MCGUIVariable<MCGUIControlVariable> defaultControl;
+    MCGUIVariable<MCGUIControlVariable> hoverControl;
+    MCGUIVariable<MCGUIControlVariable> pressedControl;
+
+    MCGUIBaseButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
     MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
@@ -174,7 +174,7 @@ struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public
 
 };
 
-struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIControl, public MCGUIDataBindingComponent, public MCGUILayoutComponent {
+struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent {
 
     MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
