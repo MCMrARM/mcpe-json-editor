@@ -123,6 +123,16 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     el->type == MCGUIComponent::Type::SCROLLBAR || \
     el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
     el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_InputComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::INPUT_PANEL || \
+    el->type == MCGUIComponent::Type::SCREEN || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_SoundComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
@@ -221,9 +231,26 @@ MCGUILayoutComponent::MCGUILayoutComponent(const MCGUIComponent &component, cons
     size.setJSON(object["size"]);
 }
 
+MCGUIInputComponent::MCGUIInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, InputComponent);
+    scrollReport.setJSON(object["scroll_report"]);
+    alwaysListenToInput.setJSON(object["always_listen_to_input"]);
+    focusEnabled.setJSON(object["focus_enabled"]);
+    defaultFocusPrecedence.setJSON(object["default_focus_precedence"]);
+    alwaysHandlePointer.setJSON(object["always_handle_pointer"]);
+    contentPanel.setJSON(object["content_panel"]);
+}
+
+MCGUISoundComponent::MCGUISoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, SoundComponent);
+    soundName.setJSON(object["sound_name"]);
+    soundVolume.setJSON(object["sound_volume"]);
+    soundPitch.setJSON(object["sound_pitch"]);
+}
+
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
-    MCGUIControl(*this, base, object), MCGUIButtonComponent(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
+    MCGUIControl(*this, base, object), MCGUIButtonComponent(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object), MCGUIInputComponent(*this, base, object), MCGUISoundComponent(*this, base, object) {
     //
 }
 

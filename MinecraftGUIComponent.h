@@ -144,11 +144,13 @@ struct MCGUILayoutComponent {
 
 struct MCGUIInputComponent {
 
+    // TODO: Keymappings
     MCGUIVariable<QList<MCGUIComponentVariable>> scrollReport;
     MCGUIVariable<bool> alwaysListenToInput = false;
     MCGUIVariable<bool> focusEnabled = false;
     MCGUIVariable<int> defaultFocusPrecedence = 0;
     MCGUIVariable<bool> alwaysHandlePointer = false;
+    MCGUIVariable<MCGUIComponentVariable> contentPanel;
 
     MCGUIInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
@@ -164,7 +166,7 @@ struct MCGUISoundComponent {
 
 };
 
-struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonComponent, public MCGUIDataBindingComponent, public MCGUILayoutComponent {
+struct MCGUIComponentButton : public MCGUIComponent, public MCGUIControl, public MCGUIButtonComponent, public MCGUIDataBindingComponent, public MCGUILayoutComponent, public MCGUIInputComponent, public MCGUISoundComponent {
 
     MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 

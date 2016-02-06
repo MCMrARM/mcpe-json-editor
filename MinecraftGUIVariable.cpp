@@ -14,6 +14,14 @@ void MCGUIVariable<int>::setVal(QJsonValue val, int def) {
     this->val = val.toInt(def);
 }
 template <>
+void MCGUIVariable<float>::setVal(QJsonValue val, float def) {
+    this->val = (float) val.toDouble(def);
+}
+template <>
+void MCGUIVariable<double>::setVal(QJsonValue val, double def) {
+    this->val = val.toDouble(def);
+}
+template <>
 void MCGUIVariable<Vec2>::setVal(QJsonValue val, Vec2 def) {
     if (val.isArray()) {
         QJsonArray a = val.toArray();
