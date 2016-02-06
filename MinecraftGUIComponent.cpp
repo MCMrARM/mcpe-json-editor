@@ -81,6 +81,10 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
         return new MCGUIComponentButton(parser, mcNamespace, name, base, object);
     case Type::CAROUSEL_LABEL:
         return new MCGUIComponentCarouselLabel(parser, mcNamespace, name, base, object);
+    case Type::CUSTOM:
+        return new MCGUIComponentCustom(parser, mcNamespace, name, base, object);
+    case Type::EDIT_BOX:
+        return new MCGUIComponentEditBox(parser, mcNamespace, name, base, object);
     case Type::LABEL:
         return new MCGUIComponentLabel(parser, mcNamespace, name, base, object);
     case Type::PANEL:
@@ -92,6 +96,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 #define MCGUICastToType(el, toType) ( \
     el->type == MCGUIComponent::Type::BUTTON ? ((toType*)(MCGUIComponentButton*) el) : \
     el->type == MCGUIComponent::Type::CAROUSEL_LABEL ? ((toType*)(MCGUIComponentCarouselLabel*) el) : \
+    el->type == MCGUIComponent::Type::CUSTOM ? ((toType*)(MCGUIComponentCustom*) el) : \
+    el->type == MCGUIComponent::Type::EDIT_BOX ? ((toType*)(MCGUIComponentEditBox*) el) : \
     el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
     el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
     (toType*) nullptr \
@@ -108,7 +114,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     el->type == MCGUIComponent::Type::SCROLLBAR || \
     el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
     el->type == MCGUIComponent::Type::TAB)
-#define MCGUIIsOfBaseType_ButtonComponent(el) (el->type == MCGUIComponent::Type::BUTTON)
+#define MCGUIIsOfBaseType_ButtonComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::EDIT_BOX)
 #define MCGUIIsOfBaseType_DataBindingComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
     el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
     el->type == MCGUIComponent::Type::CUSTOM || \
@@ -143,6 +150,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType_TextComponent(el) (el->type == MCGUIComponent::Type::LABEL)
 #define MCGUIIsOfBaseType_CarouselTextComponent(el) (el->type == MCGUIComponent::Type::CAROUSEL_LABEL)
+#define MCGUIIsOfBaseType_CustomRendererComponent(el) (el->type == MCGUIComponent::Type::CUSTOM)
+#define MCGUIIsOfBaseType_TextEditComponent(el) (el->type == MCGUIComponent::Type::EDIT_BOX)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
@@ -291,6 +300,19 @@ MCGUIBaseCarouselTextComponent::MCGUIBaseCarouselTextComponent(const MCGUICompon
     pressedAlpha.setJSON(object["pressed_alpha"]);
 }
 
+MCGUIBaseTextEditComponent::MCGUIBaseTextEditComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, TextEditComponent);
+    textType.setJSON(object["text_type"]);
+    maxLength.setJSON(object["max_length"]);
+    enabled.setJSON(object["enabled"]);
+    textControl.setJSON(object["text_control"]);
+}
+
+MCGUIBaseCustomRendererComponent::MCGUIBaseCustomRendererComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, CustomRendererComponent);
+    renderer.setJSON(object["renderer"]);
+}
+
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
@@ -300,6 +322,18 @@ MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QS
 MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentCustom::MCGUIComponentCustom(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::CUSTOM, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentEditBox::MCGUIComponentEditBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::EDIT_BOX, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
     //
 }
 

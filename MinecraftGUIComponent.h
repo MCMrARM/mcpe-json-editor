@@ -118,6 +118,10 @@ struct MCGUILayoutOffset {
         //
     }
 
+    Vec2 get(const MCGUIContext *context) {
+        return { x.get(context), y.get(context) };
+    }
+
 };
 
 struct MCGUIBaseLayoutComponent {
@@ -213,11 +217,36 @@ struct MCGUIBaseCarouselTextComponent {
 
 };
 
+struct MCGUIBaseCustomRendererComponent {
+
+    MCGUIVariable<QString> renderer;
+
+    MCGUIBaseCustomRendererComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+enum class MCGUITextType {
+
+    ExtendedASCII, IdentifierChars, NumberChars
+
+};
+
+struct MCGUIBaseTextEditComponent {
+
+    MCGUIVariable<MCGUITextType> textType = MCGUITextType::ExtendedASCII;
+    MCGUIVariable<int> maxLength = 0;
+    MCGUIVariable<bool> enabled = true;
+    MCGUIVariable<MCGUIControlVariable> textControl;
+
+    MCGUIBaseTextEditComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
 struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
     MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
@@ -225,7 +254,23 @@ struct MCGUIComponentCarouselLabel : public MCGUIComponent, public MCGUIBaseCont
 
     MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
+
+};
+
+struct MCGUIComponentCustom : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseCustomRendererComponent {
+
+    MCGUIComponentCustom(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
+
+};
+
+struct MCGUIComponentEditBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextEditComponent {
+
+    MCGUIComponentEditBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
@@ -233,7 +278,7 @@ struct MCGUIComponentLabel : public MCGUIComponent, public MCGUIBaseControl, pub
 
     MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
@@ -241,6 +286,6 @@ struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIBaseControl, pub
 
     MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };

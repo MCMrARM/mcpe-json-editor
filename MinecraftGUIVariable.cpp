@@ -139,6 +139,18 @@ void MCGUIVariable<MCGUILayoutOffset>::setVal(QJsonValue val, MCGUILayoutOffset 
     }
     this->val = def;
 }
+template <>
+void MCGUIVariable<MCGUITextType>::setVal(QJsonValue val, MCGUITextType def) {
+    QString v = val.toString("");
+    if (v == "ExtendedASCII")
+        this->val = MCGUITextType::ExtendedASCII;
+    else if (v == "IdentifierChars")
+        this->val = MCGUITextType::IdentifierChars;
+    else if (v == "NumberChars")
+        this->val = MCGUITextType::NumberChars;
+    else
+        this->val = def;
+}
 
 MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {
     if (context == nullptr || !context->components.contains(componentName))
