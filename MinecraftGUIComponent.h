@@ -32,29 +32,14 @@ struct MCGUIComponent {
     Type type;
     MCGUIVariable<bool> ignored;
     QList<Variables> variables;
-    QList<MCGUIComponent*> controls;
+    QMap<QString, MCGUIComponent*> controls;
 
-    MCGUIComponent(MinecraftJSONParser& parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIComponent(MinecraftJSONParser& parser, const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object);
 
     static Type getTypeFromString(const QString& type);
     static MCGUIComponent* createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) = 0;
-
-};
-
-struct MCGUIComponentVariable {
-
-    QString componentName;
-
-    MCGUIComponent* get(MCGUIContext *context);
-    void set(QString name) {
-        componentName = name;
-    }
-    MCGUIComponentVariable& operator=(QString name) {
-        componentName = name;
-        return *this;
-    }
 
 };
 
@@ -73,9 +58,9 @@ struct MCGUIControl {
 
 struct MCGUIButtonComponent {
 
-    MCGUIVariable<MCGUIComponentVariable> defaultControl;
-    MCGUIVariable<MCGUIComponentVariable> hoverControl;
-    MCGUIVariable<MCGUIComponentVariable> pressedControl;
+    MCGUIVariable<MCGUIControlVariable> defaultControl;
+    MCGUIVariable<MCGUIControlVariable> hoverControl;
+    MCGUIVariable<MCGUIControlVariable> pressedControl;
 
     MCGUIButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
@@ -154,6 +139,28 @@ struct MCGUILayoutComponent {
     MCGUIAnimatedVariable<MCGUILayoutOffset> offset, size;
 
     MCGUILayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+struct MCGUIInputComponent {
+
+    MCGUIVariable<MCGUIComponentVariable> scrollReport;
+    MCGUIVariable<bool> alwaysListenToInput = false;
+    MCGUIVariable<bool> focusEnabled = false;
+    MCGUIVariable<int> defaultFocusPrecedence = 0;
+    MCGUIVariable<bool> alwaysHandlePointer = false;
+
+    MCGUIInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+struct MCGUISoundComponent {
+
+    MCGUIVariable<QString> soundName;
+    MCGUIVariable<float> soundVolume = 1.f;
+    MCGUIVariable<float> soundPitch = 1.f;
+
+    MCGUISoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 

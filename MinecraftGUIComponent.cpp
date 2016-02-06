@@ -5,8 +5,8 @@
 #include <QRegularExpression>
 #include <QDebug>
 
-MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    mcNamespace(mcNamespace), name(name) {
+MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
+    mcNamespace(mcNamespace), name(name), type(type) {
     ignored.setJSON(object["ignored"], false);
     if (object["variables"].isObject()) {
         variables.push_back(Variables(object["variables"].toObject()));
@@ -22,7 +22,7 @@ MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNam
         for (auto i = o.begin(); i != o.end(); i++) {
             parser.parseComponent(i.key(), mcNamespace, i->toObject(), [this](MCGUIComponent* component) {
                 if (component != nullptr)
-                    controls.push_back(component);
+                    controls[component->mcNamespace + "." + component->name] = component;
             });
         }
     }
@@ -79,6 +79,11 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     return nullptr;
 }
 
+#define MCGUICastToType(el, toType) ( \
+    el->type == MCGUIComponent::Type::BUTTON ? ((toType*)(MCGUIComponentButton*) el) : \
+    el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
+    (toType*) nullptr \
+    )
 #define MCGUIIsOfBaseType_Control(el) (el->type == MCGUIComponent::Type::BUTTON || \
     el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
     el->type == MCGUIComponent::Type::CUSTOM || \
@@ -117,7 +122,7 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
-        *this = *((MCGUI##type*) base);
+        *this = *(MCGUICastToType(base, MCGUI##type));
 
 MCGUIControl::MCGUIControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : clipOffset({0.f, 0.f}) {
     MCGUICopyBaseProperties(base, Control);
@@ -213,13 +218,13 @@ MCGUILayoutComponent::MCGUILayoutComponent(const MCGUIComponent &component, cons
 }
 
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, base, object),
+    MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
     MCGUIControl(*this, base, object), MCGUIButtonComponent(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, base, object),
+    MCGUIComponent(parser, mcNamespace, name, Type::PANEL, base, object),
     MCGUIControl(*this, base, object), MCGUIDataBindingComponent(*this, base, object), MCGUILayoutComponent(*this, base, object) {
     //
 }

@@ -23,8 +23,46 @@ void MCGUIVariable<Vec2>::setVal(QJsonValue val, Vec2 def) {
     this->val = def;
 }
 template <>
+void MCGUIVariable<MCGUIControlVariable>::setVal(QJsonValue val, MCGUIControlVariable def) {
+    this->val = val.toString(def.componentName);
+}
+template <>
 void MCGUIVariable<MCGUIComponentVariable>::setVal(QJsonValue val, MCGUIComponentVariable def) {
     this->val = val.toString(def.componentName);
+}
+template <>
+void MCGUIVariable<QList<MCGUIControlVariable>>::setVal(QJsonValue val, QList<MCGUIControlVariable> def) {
+    if (val.isArray()) {
+        this->val.clear();
+        for (QJsonValue el : val.toArray()) {
+            this->val.push_back({ el.toString() });
+        }
+    } else {
+        QString s = val.toString("");
+        if (s.isEmpty()) {
+            this->val = def;
+        } else {
+            this->val.clear();
+            this->val.push_back({ s });
+        }
+    }
+}
+template <>
+void MCGUIVariable<QList<MCGUIComponentVariable>>::setVal(QJsonValue val, QList<MCGUIComponentVariable> def) {
+    if (val.isArray()) {
+        this->val.clear();
+        for (QJsonValue el : val.toArray()) {
+            this->val.push_back({ el.toString() });
+        }
+    } else {
+        QString s = val.toString("");
+        if (s.isEmpty()) {
+            this->val = def;
+        } else {
+            this->val.clear();
+            this->val.push_back({ s });
+        }
+    }
 }
 template <>
 void MCGUIVariable<QString>::setVal(QJsonValue val, QString def) {
@@ -89,4 +127,10 @@ MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {
     if (context == nullptr || !context->components.contains(componentName))
         return nullptr;
     return context->components[componentName];
+}
+
+MCGUIComponent* MCGUIControlVariable::get(MCGUIComponent *ownerComponent) {
+    if (ownerComponent == nullptr || !ownerComponent->controls.contains(componentName))
+        return nullptr;
+    return ownerComponent->controls[componentName];
 }

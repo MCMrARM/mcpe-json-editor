@@ -105,22 +105,19 @@ void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespac
 
         QString nameWithNamespace = mcNamespace + "." + name;
 
-        qDebug() << "Component extends:" << extendNamespace << "." << extends;
-        requireComponent(extendNamespace + "." + extends, [this, nameWithNamespace, extendNamespace, mcNamespace, name, extends, type, object, callback](MCGUIComponent* component) {
-            qDebug() << "Continuing parse of component" << nameWithNamespace << ":" << (extendNamespace+"."+extends);
+        requireComponent(extendNamespace + "." + extends, [this, extendNamespace, mcNamespace, name, extends, type, object, callback](MCGUIComponent* component) {
+            qDebug() << "Continuing parse of component" << mcNamespace << "." << name << ":" << (extendNamespace+"."+extends) << component;
 
-            if (type != component->type) {
-                qDebug() << "Component type mismatch" << (int) type << "vs" << (int) component->type;
-                return;
+            MCGUIComponent::Type newType = type;
+            if (newType == MCGUIComponent::Type::UNKNOWN) {
+                newType = component->type;
             }
 
-            MCGUIComponent *newComponent = MCGUIComponent::createComponentOfType(*this, type, mcNamespace, name, component, object);
+            MCGUIComponent *newComponent = MCGUIComponent::createComponentOfType(*this, newType, mcNamespace, name, component, object);
             callback(newComponent);
         });
     } else {
         qDebug() << "Component type:" << (int) type << "-" << object["type"].toString("");
-
-        QString nameWithNamespace = mcNamespace + "." + name;
 
         MCGUIComponent *component = MCGUIComponent::createComponentOfType(*this, type, mcNamespace, name, nullptr, object);
         callback(component);

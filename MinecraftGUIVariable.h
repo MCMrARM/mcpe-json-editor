@@ -61,3 +61,33 @@ public:
     }
 
 };
+
+struct MCGUIComponentVariable {
+
+    QString componentName;
+
+    MCGUIComponent* get(MCGUIContext *context);
+    void set(QString name) {
+        componentName = name;
+    }
+    MCGUIComponentVariable& operator=(QString name) {
+        componentName = name;
+        return *this;
+    }
+
+};
+
+struct MCGUIControlVariable {
+
+    QString componentName;
+
+    MCGUIComponent* get(MCGUIComponent *ownerComponent);
+    void set(QString name) {
+        componentName = name;
+    }
+    MCGUIControlVariable& operator=(QString name) {
+        componentName = name;
+        return *this;
+    }
+
+};
