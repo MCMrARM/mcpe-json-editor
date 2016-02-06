@@ -17,13 +17,17 @@ MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNam
                 variables.push_back(Variables(v.toObject()));
         }
     }
-    if (object["controls"].isObject()) {
-        QJsonObject o = object["controls"].toObject();
-        for (auto i = o.begin(); i != o.end(); i++) {
-            parser.parseComponent(i.key(), mcNamespace, i->toObject(), [this](MCGUIComponent* component) {
-                if (component != nullptr)
-                    controls[component->mcNamespace + "." + component->name] = component;
-            });
+    if (object["controls"].isArray()) {
+        for (QJsonValue v : object["controls"].toArray()) {
+            if (!v.isObject())
+                continue;
+            QJsonObject o = v.toObject();
+            for (auto i = o.begin(); i != o.end(); i++) {
+                parser.parseComponent(i.key(), mcNamespace, i->toObject(), [this](MCGUIComponent* component) {
+                    if (component != nullptr)
+                        controls[component->mcNamespace + "." + component->name] = component;
+                });
+            }
         }
     }
 }

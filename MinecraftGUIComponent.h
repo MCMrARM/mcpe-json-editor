@@ -144,7 +144,7 @@ struct MCGUILayoutComponent {
 
 struct MCGUIInputComponent {
 
-    MCGUIVariable<MCGUIComponentVariable> scrollReport;
+    MCGUIVariable<QList<MCGUIComponentVariable>> scrollReport;
     MCGUIVariable<bool> alwaysListenToInput = false;
     MCGUIVariable<bool> focusEnabled = false;
     MCGUIVariable<int> defaultFocusPrecedence = 0;
