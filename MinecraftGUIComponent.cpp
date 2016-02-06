@@ -5,6 +5,8 @@
 #include <QRegularExpression>
 #include <QDebug>
 
+const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
+
 MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name), type(type) {
     ignored.setJSON(object["ignored"], false);
@@ -77,6 +79,10 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     switch (type) {
     case Type::BUTTON:
         return new MCGUIComponentButton(parser, mcNamespace, name, base, object);
+    case Type::CAROUSEL_LABEL:
+        return new MCGUIComponentCarouselLabel(parser, mcNamespace, name, base, object);
+    case Type::LABEL:
+        return new MCGUIComponentLabel(parser, mcNamespace, name, base, object);
     case Type::PANEL:
         return new MCGUIComponentPanel(parser, mcNamespace, name, base, object);
     }
@@ -85,6 +91,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 
 #define MCGUICastToType(el, toType) ( \
     el->type == MCGUIComponent::Type::BUTTON ? ((toType*)(MCGUIComponentButton*) el) : \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL ? ((toType*)(MCGUIComponentCarouselLabel*) el) : \
+    el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
     el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
     (toType*) nullptr \
     )
@@ -133,6 +141,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType_SoundComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
     el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_TextComponent(el) (el->type == MCGUIComponent::Type::LABEL)
+#define MCGUIIsOfBaseType_CarouselTextComponent(el) (el->type == MCGUIComponent::Type::CAROUSEL_LABEL)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
@@ -248,9 +258,54 @@ MCGUIBaseSoundComponent::MCGUIBaseSoundComponent(const MCGUIComponent &component
     soundPitch.setJSON(object["sound_pitch"]);
 }
 
+MCGUIBaseTextComponent::MCGUIBaseTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, TextComponent);
+    text.setJSON(object["text"]);
+    alignment.setJSON(object["alignment"]);
+    color.setJSON(object["color"]);
+    alpha.setJSON(object["alpha"]);
+    shadow.setJSON(object["shadow"]);
+    //fontSize.setJSON(object["font_size"]);
+    wrap.setJSON(object["wrap"]);
+    clip.setJSON(object["clip"]);
+    localize.setJSON(object["localize"]);
+    runeFont.setJSON(object["rune_font"]);
+}
+
+MCGUIBaseCarouselTextComponent::MCGUIBaseCarouselTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, CarouselTextComponent);
+    text.setJSON(object["text"]);
+    alignment.setJSON(object["alignment"]);
+    color.setJSON(object["color"]);
+    alpha.setJSON(object["alpha"]);
+    shadow.setJSON(object["shadow"]);
+    //fontSize.setJSON(object["font_size"]);
+    wrap.setJSON(object["wrap"]);
+    clip.setJSON(object["clip"]);
+    localize.setJSON(object["localize"]);
+    alwaysRotate.setJSON(object["always_rotate"]);
+    rotateSpeed.setJSON(object["rotate_speed"]);
+    hoverColor.setJSON(object["hover_color"]);
+    hoverAlpha.setJSON(object["hover_alpha"]);
+    pressedColor.setJSON(object["pressed_color"]);
+    pressedAlpha.setJSON(object["pressed_alpha"]);
+}
+
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentLabel::MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::LABEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
     //
 }
 

@@ -81,6 +81,15 @@ void MCGUIVariable<QJsonObject>::setVal(QJsonValue val, QJsonObject def) {
     this->val = val.toObject(def);
 }
 template <>
+void MCGUIVariable<MCGUIColor>::setVal(QJsonValue val, MCGUIColor def) {
+    if (val.isArray()) {
+        QJsonArray arr = val.toArray();
+        this->val = {(float) arr[0].toDouble(def.r), (float) arr[1].toDouble(def.g), (float) arr[2].toDouble(def.b), (float) arr[3].toDouble(def.a)};
+    } else {
+        this->val = def;
+    }
+}
+template <>
 void MCGUIVariable<MCGUIAnchorPoint>::setVal(QJsonValue val, MCGUIAnchorPoint def) {
     QString v = val.toString("");
     if (v == "top_left")

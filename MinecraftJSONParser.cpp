@@ -106,7 +106,7 @@ void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespac
         QString nameWithNamespace = mcNamespace + "." + name;
 
         requireComponent(extendNamespace + "." + extends, [this, extendNamespace, mcNamespace, name, extends, type, object, callback](MCGUIComponent* component) {
-            qDebug() << "Continuing parse of component" << mcNamespace << "." << name << ":" << (extendNamespace+"."+extends) << component;
+            qDebug() << "Continuing parse of component" << mcNamespace << "." << name << ":" << (extendNamespace+"."+extends);
 
             MCGUIComponent::Type newType = type;
             if (newType == MCGUIComponent::Type::UNKNOWN) {

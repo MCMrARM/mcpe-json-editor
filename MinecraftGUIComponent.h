@@ -166,9 +166,72 @@ struct MCGUIBaseButtonComponent {
 
 };
 
+struct MCGUIColor {
+
+    float r, g, b, a;
+
+    static const MCGUIColor WHITE;
+
+};
+
+struct MCGUIBaseTextComponent {
+
+    MCGUIVariable<QString> text;
+    MCGUIVariable<MCGUIAnchorPoint> alignment = MCGUIAnchorPoint::CENTER;
+    MCGUIVariable<MCGUIColor> color = MCGUIColor::WHITE;
+    MCGUIVariable<float> alpha = 1.f;
+    MCGUIVariable<bool> shadow = false;
+    //MCGUIVariable<MCGUIFontSize> fontSize;
+    MCGUIVariable<bool> wrap = false;
+    MCGUIVariable<bool> clip = false;
+    MCGUIVariable<bool> localize = true;
+    MCGUIVariable<bool> runeFont = false;
+
+    MCGUIBaseTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+struct MCGUIBaseCarouselTextComponent {
+
+    MCGUIVariable<QString> text;
+    MCGUIVariable<MCGUIAnchorPoint> alignment = MCGUIAnchorPoint::CENTER;
+    MCGUIVariable<MCGUIColor> color = MCGUIColor::WHITE;
+    MCGUIVariable<float> alpha = 1.f;
+    MCGUIVariable<bool> shadow = false;
+    //MCGUIVariable<MCGUIFontSize> fontSize;
+    MCGUIVariable<bool> wrap = false;
+    MCGUIVariable<bool> clip = false;
+    MCGUIVariable<bool> localize = true;
+    MCGUIVariable<bool> alwaysRotate = false;
+    MCGUIVariable<float> rotateSpeed = 0.1f;
+    MCGUIVariable<MCGUIColor> hoverColor = MCGUIColor::WHITE;
+    MCGUIVariable<float> hoverAlpha = 1.f;
+    MCGUIVariable<MCGUIColor> pressedColor = MCGUIColor::WHITE;
+    MCGUIVariable<float> pressedAlpha = 1.f;
+
+    MCGUIBaseCarouselTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
 struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
     MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+
+};
+
+struct MCGUIComponentCarouselLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
+
+    MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
+
+};
+
+struct MCGUIComponentLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextComponent {
+
+    MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return { size.get(context).x.get(context), size.get(context).y.get(context) }; }
 
