@@ -89,6 +89,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
         return new MCGUIComponentGrid(parser, mcNamespace, name, base, object);
     case Type::GRID_ITEM:
         return new MCGUIComponentGridItem(parser, mcNamespace, name, base, object);
+    case Type::IMAGE:
+        return new MCGUIComponentImage(parser, mcNamespace, name, base, object);
     case Type::INPUT_PANEL:
         return new MCGUIComponentInputPanel(parser, mcNamespace, name, base, object);
     case Type::LABEL:
@@ -269,6 +271,19 @@ MCGUIBaseGridItemComponent::MCGUIBaseGridItemComponent(const MCGUIComponent &com
     gridPosition.setJSON(object["grid_position"]);
 }
 
+MCGUIBaseSpriteComponent::MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, SpriteComponent);
+    texture.setJSON(object["texture"]);
+    uv.setJSON(object["uv"]);
+    uvSize.setJSON(object["uv_size"]);
+    alpha.setJSON(object["alpha"]);
+    color.setJSON(object["color"]);
+    ninesliceSize.setJSON(object["nineslice_size"]);
+    tiled.setJSON(object["tiled"]);
+    clipDirection.setJSON(object["clip_direction"]);
+    clipRatio.setJSON(object["clip_ratio"]);
+}
+
 MCGUIBaseCustomRendererComponent::MCGUIBaseCustomRendererComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, CustomRendererComponent);
     renderer.setJSON(object["renderer"]);
@@ -314,6 +329,12 @@ MCGUIComponentGrid::MCGUIComponentGrid(MinecraftJSONParser &parser, const QStrin
 MCGUIComponentGridItem::MCGUIComponentGridItem(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::GRID_ITEM, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseGridItemComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentImage::MCGUIComponentImage(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::IMAGE, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
     //
 }
 

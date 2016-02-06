@@ -269,6 +269,28 @@ struct MCGUIBaseGridItemComponent {
 
 };
 
+enum class MCGUIDirection {
+
+    LEFT, RIGHT, UP, DOWN, CENTER
+
+};
+
+struct MCGUIBaseSpriteComponent {
+
+    MCGUIVariable<QString> texture;
+    MCGUIAnimatedVariable<Vec2> uv;
+    MCGUIVariable<Vec2> uvSize;
+    MCGUIVariable<float> alpha;
+    MCGUIAnimatedVariable<MCGUIColor> color;
+    MCGUIVariable<Vec2> ninesliceSize;
+    MCGUIVariable<bool> tiled;
+    MCGUIVariable<MCGUIDirection> clipDirection;
+    MCGUIAnimatedVariable<float> clipRatio;
+
+    MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
 struct MCGUIBaseTabComponent {
 
     MCGUIVariable<int> tabGroup = 0;
@@ -327,6 +349,14 @@ struct MCGUIComponentGridItem : public MCGUIComponent, public MCGUIBaseControl, 
 
 };
 
+struct MCGUIComponentImage : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSpriteComponent {
+
+    MCGUIComponentImage(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
+
+};
+
 struct MCGUIComponentInputPanel : public MCGUIComponent, public MCGUIBaseInputComponent {
 
     MCGUIComponentInputPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
@@ -375,6 +405,7 @@ struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, publi
     el->type == MCGUIComponent::Type::EDIT_BOX ? ((toType*)(MCGUIComponentEditBox*) el) : \
     el->type == MCGUIComponent::Type::GRID ? ((toType*)(MCGUIComponentGrid*) el) : \
     el->type == MCGUIComponent::Type::GRID_ITEM ? ((toType*)(MCGUIComponentGridItem*) el) : \
+    el->type == MCGUIComponent::Type::IMAGE ? ((toType*)(MCGUIComponentImage*) el) : \
     el->type == MCGUIComponent::Type::INPUT_PANEL ? ((toType*)(MCGUIComponentInputPanel*) el) : \
     el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
     el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
@@ -434,6 +465,7 @@ struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, publi
 #define MCGUIIsOfBaseType_TextEditComponent(el) (el->type == MCGUIComponent::Type::EDIT_BOX)
 #define MCGUIIsOfBaseType_GridComponent(el) (el->type == MCGUIComponent::Type::GRID)
 #define MCGUIIsOfBaseType_GridItemComponent(el) (el->type == MCGUIComponent::Type::GRID_ITEM)
+#define MCGUIIsOfBaseType_SpriteComponent(el) (el->type == MCGUIComponent::Type::IMAGE)
 #define MCGUIIsOfBaseType_TabComponent(el) (el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \

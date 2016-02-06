@@ -172,6 +172,22 @@ void MCGUIVariable<MCGUIGridRescalingType>::setVal(QJsonValue val, MCGUIGridResc
     else
         this->val = def;
 }
+template <>
+void MCGUIVariable<MCGUIDirection>::setVal(QJsonValue val, MCGUIDirection def) {
+    QString v = val.toString("");
+    if (v == "left")
+        this->val = MCGUIDirection::LEFT;
+    else if (v == "right")
+        this->val = MCGUIDirection::RIGHT;
+    else if (v == "up")
+        this->val = MCGUIDirection::UP;
+    else if (v == "down")
+        this->val = MCGUIDirection::DOWN;
+    else if (v == "center")
+        this->val = MCGUIDirection::CENTER;
+    else
+        this->val = def;
+}
 
 MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {
     if (context == nullptr || !context->components.contains(componentName))
