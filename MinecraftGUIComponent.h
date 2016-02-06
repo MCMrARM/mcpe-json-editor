@@ -242,6 +242,33 @@ struct MCGUIBaseTextEditComponent {
 
 };
 
+enum class MCGUIGridRescalingType {
+
+    HORIZONTAL, VERTICAL, NONE
+
+};
+
+struct MCGUIBaseGridComponent {
+
+    MCGUIVariable<IVec2> gridDimensions;
+    MCGUIVariable<QString> gridDimensionBinding;
+    MCGUIVariable<QString> collectionName;
+    MCGUIVariable<MCGUIGridRescalingType> gridRescalingType;
+    MCGUIVariable<int> maximumGridItems = 0;
+    MCGUIVariable<MCGUIComponentVariable> gridItemTemplate;
+
+    MCGUIBaseGridComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
+struct MCGUIBaseGridItemComponent {
+
+    MCGUIVariable<IVec2> gridPosition;
+
+    MCGUIBaseGridItemComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
 struct MCGUIBaseTabComponent {
 
     MCGUIVariable<int> tabGroup = 0;
@@ -279,6 +306,22 @@ struct MCGUIComponentCustom : public MCGUIComponent, public MCGUIBaseControl, pu
 struct MCGUIComponentEditBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextEditComponent {
 
     MCGUIComponentEditBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
+
+};
+
+struct MCGUIComponentGrid : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseGridComponent, public MCGUIBaseLayoutComponent {
+
+    MCGUIComponentGrid(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
+
+};
+
+struct MCGUIComponentGridItem : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseGridItemComponent, public MCGUIBaseLayoutComponent {
+
+    MCGUIComponentGridItem(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -323,3 +366,76 @@ struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, publi
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
+
+// Cast & copy macros
+#define MCGUICastToType(el, toType) ( \
+    el->type == MCGUIComponent::Type::BUTTON ? ((toType*)(MCGUIComponentButton*) el) : \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL ? ((toType*)(MCGUIComponentCarouselLabel*) el) : \
+    el->type == MCGUIComponent::Type::CUSTOM ? ((toType*)(MCGUIComponentCustom*) el) : \
+    el->type == MCGUIComponent::Type::EDIT_BOX ? ((toType*)(MCGUIComponentEditBox*) el) : \
+    el->type == MCGUIComponent::Type::GRID ? ((toType*)(MCGUIComponentGrid*) el) : \
+    el->type == MCGUIComponent::Type::GRID_ITEM ? ((toType*)(MCGUIComponentGridItem*) el) : \
+    el->type == MCGUIComponent::Type::INPUT_PANEL ? ((toType*)(MCGUIComponentInputPanel*) el) : \
+    el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
+    el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
+    el->type == MCGUIComponent::Type::SCREEN ? ((toType*)(MCGUIComponentScreen*) el) : \
+    el->type == MCGUIComponent::Type::TAB ? ((toType*)(MCGUIComponentTab*) el) : \
+    (toType*) nullptr \
+    )
+#define MCGUIIsOfBaseType_Control(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::GRID_ITEM || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_ButtonComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::EDIT_BOX)
+#define MCGUIIsOfBaseType_DataBindingComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCREEN || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_LayoutComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::CUSTOM || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::GRID || \
+    el->type == MCGUIComponent::Type::GRID_ITEM || \
+    el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::LABEL || \
+    el->type == MCGUIComponent::Type::PANEL || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_InputComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::CAROUSEL_LABEL || \
+    el->type == MCGUIComponent::Type::EDIT_BOX || \
+    el->type == MCGUIComponent::Type::INPUT_PANEL || \
+    el->type == MCGUIComponent::Type::SCREEN || \
+    el->type == MCGUIComponent::Type::SCROLLBAR || \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_SoundComponent(el) (el->type == MCGUIComponent::Type::BUTTON || \
+    el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType_TextComponent(el) (el->type == MCGUIComponent::Type::LABEL)
+#define MCGUIIsOfBaseType_CarouselTextComponent(el) (el->type == MCGUIComponent::Type::CAROUSEL_LABEL)
+#define MCGUIIsOfBaseType_CustomRendererComponent(el) (el->type == MCGUIComponent::Type::CUSTOM)
+#define MCGUIIsOfBaseType_TextEditComponent(el) (el->type == MCGUIComponent::Type::EDIT_BOX)
+#define MCGUIIsOfBaseType_GridComponent(el) (el->type == MCGUIComponent::Type::GRID)
+#define MCGUIIsOfBaseType_GridItemComponent(el) (el->type == MCGUIComponent::Type::GRID_ITEM)
+#define MCGUIIsOfBaseType_TabComponent(el) (el->type == MCGUIComponent::Type::TAB)
+#define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
+#define MCGUICopyBaseProperties(base, type) \
+    if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
+        *this = *(MCGUICastToType(base, MCGUIBase##type));

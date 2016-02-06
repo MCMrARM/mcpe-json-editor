@@ -31,6 +31,15 @@ void MCGUIVariable<Vec2>::setVal(QJsonValue val, Vec2 def) {
     this->val = def;
 }
 template <>
+void MCGUIVariable<IVec2>::setVal(QJsonValue val, IVec2 def) {
+    if (val.isArray()) {
+        QJsonArray a = val.toArray();
+        this->val = {a[0].toInt(def.x), a[1].toInt(def.y)};
+        return;
+    }
+    this->val = def;
+}
+template <>
 void MCGUIVariable<MCGUIControlVariable>::setVal(QJsonValue val, MCGUIControlVariable def) {
     this->val = val.toString(def.componentName);
 }
@@ -148,6 +157,18 @@ void MCGUIVariable<MCGUITextType>::setVal(QJsonValue val, MCGUITextType def) {
         this->val = MCGUITextType::IdentifierChars;
     else if (v == "NumberChars")
         this->val = MCGUITextType::NumberChars;
+    else
+        this->val = def;
+}
+template <>
+void MCGUIVariable<MCGUIGridRescalingType>::setVal(QJsonValue val, MCGUIGridRescalingType def) {
+    QString v = val.toString("");
+    if (v == "horizontal")
+        this->val = MCGUIGridRescalingType::HORIZONTAL;
+    else if (v == "vertical")
+        this->val = MCGUIGridRescalingType::VERTICAL;
+    else if (v == "none")
+        this->val = MCGUIGridRescalingType::NONE;
     else
         this->val = def;
 }
