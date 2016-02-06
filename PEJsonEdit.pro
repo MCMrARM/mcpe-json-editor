@@ -7,7 +7,8 @@ SOURCES += main.cpp \
     MinecraftJSONParser.cpp \
     MinecraftGUIComponent.cpp \
     MinecraftGUIVariable.cpp \
-    MinecraftGUIContext.cpp
+    MinecraftGUIContext.cpp \
+    MinecraftGUIButtonId.cpp
 
 RESOURCES += qml.qrc
 
@@ -23,4 +24,5 @@ HEADERS += \
     Vec2.h \
     MinecraftGUIBindings.h \
     MinecraftGUIVariable.h \
-    MinecraftGUIContext.h
+    MinecraftGUIContext.h \
+    MinecraftGUIButtonId.h

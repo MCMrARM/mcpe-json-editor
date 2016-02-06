@@ -8,6 +8,7 @@
 #include "Vec2.h"
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIBindings.h"
+#include "MinecraftGUIButtonId.h"
 
 class MinecraftJSONParser;
 
@@ -291,11 +292,23 @@ struct MCGUIBaseSpriteComponent {
 
 };
 
+struct MCGUIBaseScrollbarComponent {
+
+    MCGUIVariable<MCGUIButtonId> scrollbarBoxTrackButton;
+    MCGUIVariable<MCGUIButtonId> scrollbarTouchButton;
+    MCGUIVariable<float> dampening = 1.f;
+    MCGUIVariable<float> scrollSpeed = 1.f;
+    MCGUIVariable<MCGUIControlVariable> scrollbarBox;
+
+    MCGUIBaseScrollbarComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
+
+};
+
 struct MCGUIBaseTabComponent {
 
     MCGUIVariable<int> tabGroup = 0;
     MCGUIVariable<int> tabIndex = 0;
-    MCGUIVariable<MCGUIControlVariable> tabContent;
+    MCGUIVariable<MCGUIComponentVariable> tabContent;
 
     MCGUIBaseTabComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
@@ -389,6 +402,22 @@ struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBinding
 
 };
 
+struct MCGUIComponentScrollbar : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseScrollbarComponent {
+
+    MCGUIComponentScrollbar(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
+
+};
+
+struct MCGUIComponentScrollbarBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent {
+
+    MCGUIComponentScrollbarBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+
+    virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
+
+};
+
 struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
 
     MCGUIComponentTab(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
@@ -410,6 +439,8 @@ struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, publi
     el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
     el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
     el->type == MCGUIComponent::Type::SCREEN ? ((toType*)(MCGUIComponentScreen*) el) : \
+    el->type == MCGUIComponent::Type::SCROLLBAR ? ((toType*)(MCGUIComponentScrollbar*) el) : \
+    el->type == MCGUIComponent::Type::SCROLLBAR_BOX ? ((toType*)(MCGUIComponentScrollbarBox*) el) : \
     el->type == MCGUIComponent::Type::TAB ? ((toType*)(MCGUIComponentTab*) el) : \
     (toType*) nullptr \
     )
@@ -466,6 +497,7 @@ struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, publi
 #define MCGUIIsOfBaseType_GridComponent(el) (el->type == MCGUIComponent::Type::GRID)
 #define MCGUIIsOfBaseType_GridItemComponent(el) (el->type == MCGUIComponent::Type::GRID_ITEM)
 #define MCGUIIsOfBaseType_SpriteComponent(el) (el->type == MCGUIComponent::Type::IMAGE)
+#define MCGUIIsOfBaseType_ScrollbarComponent(el) (el->type == MCGUIComponent::Type::SCROLLBAR)
 #define MCGUIIsOfBaseType_TabComponent(el) (el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \

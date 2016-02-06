@@ -99,6 +99,10 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
         return new MCGUIComponentPanel(parser, mcNamespace, name, base, object);
     case Type::SCREEN:
         return new MCGUIComponentScreen(parser, mcNamespace, name, base, object);
+    case Type::SCROLLBAR:
+        return new MCGUIComponentScrollbar(parser, mcNamespace, name, base, object);
+    case Type::SCROLLBAR_BOX:
+        return new MCGUIComponentScrollbarBox(parser, mcNamespace, name, base, object);
     case Type::TAB:
         return new MCGUIComponentTab(parser, mcNamespace, name, base, object);
     }
@@ -289,6 +293,15 @@ MCGUIBaseCustomRendererComponent::MCGUIBaseCustomRendererComponent(const MCGUICo
     renderer.setJSON(object["renderer"]);
 }
 
+MCGUIBaseScrollbarComponent::MCGUIBaseScrollbarComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, ScrollbarComponent);
+    scrollbarBoxTrackButton.setJSON(object["scrollbar_box_track_button"]);
+    scrollbarTouchButton.setJSON(object["scrollbar_touch_button"]);
+    dampening.setJSON(object["dampening"]);
+    scrollSpeed.setJSON(object["scroll_speed"]);
+    scrollbarBox.setJSON(object["scrollbar_box"]);
+}
+
 MCGUIBaseTabComponent::MCGUIBaseTabComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, TabComponent);
     tabGroup.setJSON(object["tab_group"]);
@@ -359,6 +372,18 @@ MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QStr
 MCGUIComponentScreen::MCGUIComponentScreen(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::SCREEN, base, object),
     MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentScrollbar::MCGUIComponentScrollbar(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::SCROLLBAR, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseScrollbarComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 

@@ -1,6 +1,7 @@
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIContext.h"
 #include "MinecraftGUIComponent.h"
+#include "MinecraftGUIButtonId.h"
 #include <QString>
 #include <QJsonArray>
 #include "Vec2.h"
@@ -97,6 +98,12 @@ void MCGUIVariable<MCGUIColor>::setVal(QJsonValue val, MCGUIColor def) {
     } else {
         this->val = def;
     }
+}
+template <>
+void MCGUIVariable<MCGUIButtonId>::setVal(QJsonValue val, MCGUIButtonId def) {
+    this->val = MCGUIButtonId::getByString(val.toString(""));
+    if (this->val.id == -1)
+        this->val = def;
 }
 template <>
 void MCGUIVariable<MCGUIAnchorPoint>::setVal(QJsonValue val, MCGUIAnchorPoint def) {
