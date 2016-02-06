@@ -75,7 +75,15 @@ MCGUIComponent::Type MCGUIComponent::getTypeFromString(const QString &type) {
     return Type::UNKNOWN;
 }
 
-MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object) {
+    if (base != nullptr && base->type == Type::UNKNOWN) {
+        const QJsonObject& baseObject = ((MCGUIUnknownComponent*) base)->object;
+        for (auto it = baseObject.begin(); it != baseObject.end(); it++) {
+            if (!object.contains(it.key()))
+                object[it.key()] = *it;
+        }
+    }
+
     switch (type) {
     case Type::BUTTON:
         return new MCGUIComponentButton(parser, mcNamespace, name, base, object);
@@ -105,6 +113,8 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
         return new MCGUIComponentScrollbarBox(parser, mcNamespace, name, base, object);
     case Type::TAB:
         return new MCGUIComponentTab(parser, mcNamespace, name, base, object);
+    case Type::UNKNOWN:
+        return new MCGUIUnknownComponent(parser, mcNamespace, name, base, object);
     }
     return nullptr;
 }
@@ -390,5 +400,10 @@ MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(MinecraftJSONParser &pars
 MCGUIComponentTab::MCGUIComponentTab(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::TAB, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
+    //
+}
+
+MCGUIUnknownComponent::MCGUIUnknownComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::UNKNOWN, base, object), object(object) {
     //
 }
