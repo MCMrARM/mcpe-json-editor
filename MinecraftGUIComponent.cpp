@@ -85,10 +85,16 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
         return new MCGUIComponentCustom(parser, mcNamespace, name, base, object);
     case Type::EDIT_BOX:
         return new MCGUIComponentEditBox(parser, mcNamespace, name, base, object);
+    case Type::INPUT_PANEL:
+        return new MCGUIComponentInputPanel(parser, mcNamespace, name, base, object);
     case Type::LABEL:
         return new MCGUIComponentLabel(parser, mcNamespace, name, base, object);
     case Type::PANEL:
         return new MCGUIComponentPanel(parser, mcNamespace, name, base, object);
+    case Type::SCREEN:
+        return new MCGUIComponentScreen(parser, mcNamespace, name, base, object);
+    case Type::TAB:
+        return new MCGUIComponentTab(parser, mcNamespace, name, base, object);
     }
     return nullptr;
 }
@@ -98,8 +104,11 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
     el->type == MCGUIComponent::Type::CAROUSEL_LABEL ? ((toType*)(MCGUIComponentCarouselLabel*) el) : \
     el->type == MCGUIComponent::Type::CUSTOM ? ((toType*)(MCGUIComponentCustom*) el) : \
     el->type == MCGUIComponent::Type::EDIT_BOX ? ((toType*)(MCGUIComponentEditBox*) el) : \
+    el->type == MCGUIComponent::Type::INPUT_PANEL ? ((toType*)(MCGUIComponentInputPanel*) el) : \
     el->type == MCGUIComponent::Type::LABEL ? ((toType*)(MCGUIComponentLabel*) el) : \
     el->type == MCGUIComponent::Type::PANEL ? ((toType*)(MCGUIComponentPanel*) el) : \
+    el->type == MCGUIComponent::Type::SCREEN ? ((toType*)(MCGUIComponentScreen*) el) : \
+    el->type == MCGUIComponent::Type::TAB ? ((toType*)(MCGUIComponentTab*) el) : \
     (toType*) nullptr \
     )
 #define MCGUIIsOfBaseType_Control(el) (el->type == MCGUIComponent::Type::BUTTON || \
@@ -152,6 +161,7 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 #define MCGUIIsOfBaseType_CarouselTextComponent(el) (el->type == MCGUIComponent::Type::CAROUSEL_LABEL)
 #define MCGUIIsOfBaseType_CustomRendererComponent(el) (el->type == MCGUIComponent::Type::CUSTOM)
 #define MCGUIIsOfBaseType_TextEditComponent(el) (el->type == MCGUIComponent::Type::EDIT_BOX)
+#define MCGUIIsOfBaseType_TabComponent(el) (el->type == MCGUIComponent::Type::TAB)
 #define MCGUIIsOfBaseType(el, type) MCGUIIsOfBaseType_##type(el)
 #define MCGUICopyBaseProperties(base, type) \
     if (base != nullptr && MCGUIIsOfBaseType(base, type)) \
@@ -313,6 +323,13 @@ MCGUIBaseCustomRendererComponent::MCGUIBaseCustomRendererComponent(const MCGUICo
     renderer.setJSON(object["renderer"]);
 }
 
+MCGUIBaseTabComponent::MCGUIBaseTabComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUICopyBaseProperties(base, TabComponent);
+    tabGroup.setJSON(object["tab_group"]);
+    tabIndex.setJSON(object["tab_index"]);
+    tabContent.setJSON(object["tab_content"]);
+}
+
 MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
@@ -337,6 +354,12 @@ MCGUIComponentEditBox::MCGUIComponentEditBox(MinecraftJSONParser &parser, const 
     //
 }
 
+MCGUIComponentInputPanel::MCGUIComponentInputPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::INPUT_PANEL, base, object),
+    MCGUIBaseInputComponent(*this, base, object) {
+    //
+}
+
 MCGUIComponentLabel::MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(parser, mcNamespace, name, Type::LABEL, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
@@ -349,3 +372,14 @@ MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QStr
     //
 }
 
+MCGUIComponentScreen::MCGUIComponentScreen(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::SCREEN, base, object),
+    MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    //
+}
+
+MCGUIComponentTab::MCGUIComponentTab(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(parser, mcNamespace, name, Type::TAB, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
+    //
+}

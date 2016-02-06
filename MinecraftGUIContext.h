@@ -3,6 +3,7 @@
 #include <QString>
 #include <QMap>
 #include <QJsonValue>
+#include "Vec2.h"
 
 struct MCGUIComponent;
 
@@ -13,6 +14,7 @@ public:
     QList<QMap<QString, QJsonValue>> prevVariables;
     QMap<QString, MCGUIComponent*>& components;
     QList<MCGUIComponent*> componentStack;
+    Vec2 screenSize;
 
     void enter(MCGUIComponent* component);
     void exit();
