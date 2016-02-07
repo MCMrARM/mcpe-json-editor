@@ -2,9 +2,11 @@
 
 #include <QQuickItem>
 #include <QString>
+#include "Vec2.h"
 
 class MinecraftJSONParser;
 class MCGUIComponent;
+class MCGUIContext;
 
 class QMinecraftGUIEditor : public QQuickItem
 {
@@ -15,14 +17,17 @@ class QMinecraftGUIEditor : public QQuickItem
     Q_PROPERTY(QString editComponent READ editComponentString WRITE setEditComponent NOTIFY editComponentChanged)
 
     MinecraftJSONParser *mParser;
-    MCGUIComponent *mEditComponent;
+    MCGUIComponent *mEditComponent = nullptr;
     qreal mScreenWidth, mScreenHeight;
     bool mRebuildComponent = true;
+    bool mDrawDebugLines = true;
 
 public:
     QMinecraftGUIEditor(QQuickItem *parent = 0);
 
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *);
+
+    QSGNode *buildNode(MCGUIContext &context, MCGUIComponent *component, Vec2 off);
 
     void setMinecraftJSONParser(MinecraftJSONParser *parser) {
         mParser = parser;

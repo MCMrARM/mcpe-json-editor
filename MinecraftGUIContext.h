@@ -16,6 +16,10 @@ public:
     QList<MCGUIComponent*> componentStack;
     Vec2 screenSize;
 
+    MCGUIContext(QMap<QString, MCGUIComponent*>& components) : components(components) {
+        //
+    }
+
     void enter(MCGUIComponent* component);
     void exit();
 

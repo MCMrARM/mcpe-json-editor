@@ -50,7 +50,8 @@ struct MCGUIComponent {
     static Type getTypeFromString(const QString& type);
     static MCGUIComponent* createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) = 0;
+    virtual Vec2 getPos(MCGUIContext *context) = 0;
+    virtual Vec2 calculateSize(MCGUIContext *context) = 0;
 
 };
 
@@ -114,7 +115,7 @@ struct MCGUILayoutAxis {
 
     std::vector<Component> components;
 
-    float get(const MCGUIContext *context);
+    float get(MCGUIContext *context);
 
     void set(const QString &str);
     void set(const QJsonValue &obj);
@@ -129,7 +130,7 @@ struct MCGUILayoutOffset {
         //
     }
 
-    Vec2 get(const MCGUIContext *context) {
+    Vec2 get(MCGUIContext *context) {
         return { x.get(context), y.get(context) };
     }
 
@@ -324,59 +325,62 @@ struct MCGUIBaseTabComponent {
 
 };
 
-struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
+struct MCGUILayoutComponent : public MCGUIComponent, public MCGUIBaseLayoutComponent {
+
+    MCGUILayoutComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
+        MCGUIComponent(mcNamespace, name, type, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+        //
+    }
+
+    virtual Vec2 getPos(MCGUIContext *context) {
+        return offset.get(context).get(context);
+    }
+    virtual Vec2 calculateSize(MCGUIContext *context) {
+        return size.get(context).get(context);
+    }
+
+};
+
+struct MCGUIComponentButton : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
     MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentCarouselLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
+struct MCGUIComponentCarouselLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
 
     MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentCustom : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseCustomRendererComponent {
+struct MCGUIComponentCustom : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseCustomRendererComponent {
 
     MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentEditBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextEditComponent {
+struct MCGUIComponentEditBox : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseTextEditComponent {
 
     MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentGrid : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseGridComponent, public MCGUIBaseLayoutComponent {
+struct MCGUIComponentGrid : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseGridComponent {
 
     MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentGridItem : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseGridItemComponent, public MCGUIBaseLayoutComponent {
+struct MCGUIComponentGridItem : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseGridItemComponent {
 
     MCGUIComponentGridItem(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
-struct MCGUIComponentImage : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSpriteComponent {
+struct MCGUIComponentImage : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseSpriteComponent {
 
     MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
-
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
@@ -384,55 +388,46 @@ struct MCGUIComponentInputPanel : public MCGUIComponent, public MCGUIBaseInputCo
 
     MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return {0.f, 0.f}; }
+    virtual Vec2 getPos(MCGUIContext *context) { return {0.f, 0.f}; }
+    virtual Vec2 calculateSize(MCGUIContext *context) { return {0.f, 0.f}; }
 
 };
 
-struct MCGUIComponentLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextComponent {
+struct MCGUIComponentLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseTextComponent {
 
     MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent {
+struct MCGUIComponentPanel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent {
 
     MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
-
 };
 
-struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent {
+struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBindingComponent {
 
     MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
+    virtual Vec2 getPos(MCGUIContext *context) { return {0.f, 0.f}; }
+    virtual Vec2 calculateSize(MCGUIContext *context) { return context->screenSize; }
 
 };
 
-struct MCGUIComponentScrollbar : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseScrollbarComponent {
+struct MCGUIComponentScrollbar : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseScrollbarComponent {
 
     MCGUIComponentScrollbar(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
-
 };
 
-struct MCGUIComponentScrollbarBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent {
+struct MCGUIComponentScrollbarBox : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent {
 
     MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
-
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
-
 };
 
-struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
+struct MCGUIComponentTab : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
 
     MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
-
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
 };
 
@@ -442,7 +437,8 @@ struct MCGUIUnknownComponent : public MCGUIComponent {
 
     MCGUIUnknownComponent(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
-    virtual Vec2 calculateSize(const MCGUIContext *context) { return {0.f, 0.f}; }
+    virtual Vec2 getPos(MCGUIContext *context) { return {0.f, 0.f}; }
+    virtual Vec2 calculateSize(MCGUIContext *context) { return {0.f, 0.f}; }
 
 };
 

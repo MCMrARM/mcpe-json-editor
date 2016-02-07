@@ -9,6 +9,11 @@ const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
 
 MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name), type(type) {
+    if (base != nullptr) {
+        ignored = base->ignored;
+        variables = base->variables;
+        controls = base->controls;
+    }
     ignored.setJSON(object["ignored"], false);
     if (object["variables"].isObject()) {
         variables.push_back(Variables(object["variables"].toObject()));
@@ -179,17 +184,15 @@ MCGUIBaseDataBindingComponent::MCGUIBaseDataBindingComponent(const MCGUIComponen
 
 }
 
-float MCGUILayoutAxis::get(const MCGUIContext *context) {
+float MCGUILayoutAxis::get(MCGUIContext *context) {
    MCGUIComponent* component = nullptr;
    Vec2 componentSize;
    if (context != nullptr) {
        if (context->componentStack.size() > 0) {
-           if (context->componentStack.size() > 1) {
-               component = context->componentStack[context->componentStack.size() - 2];
-           } else {
-               component = context->componentStack.last();
-           }
+           component = context->componentStack.last();
+           context->componentStack.pop_back();
            componentSize = component->calculateSize(context);
+           context->componentStack.push_back(component);
        } else {
            componentSize = context->screenSize;
        }
@@ -245,6 +248,10 @@ void MCGUILayoutAxis::set(const QString &str) {
 }
 
 MCGUIBaseLayoutComponent::MCGUIBaseLayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+    MCGUILayoutOffset off;
+    off.x.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_X, 1.f});
+    off.y.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_Y, 1.f});
+    size.set(off);
     MCGUICopyBaseProperties(base, LayoutComponent);
     anchorFrom.setJSON(object["anchor_from"]);
     anchorTo.setJSON(object["anchor_to"]);
@@ -362,44 +369,44 @@ MCGUIBaseTabComponent::MCGUIBaseTabComponent(const MCGUIComponent &component, co
 }
 
 MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::BUTTON, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::BUTTON, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentCustom::MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::CUSTOM, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::CUSTOM, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentEditBox::MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::EDIT_BOX, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::EDIT_BOX, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentGrid::MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::GRID, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseGridComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::GRID, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseGridComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentGridItem::MCGUIComponentGridItem(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::GRID_ITEM, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseGridItemComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::GRID_ITEM, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseGridItemComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentImage::MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::IMAGE, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::IMAGE, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
     //
 }
 
@@ -410,38 +417,38 @@ MCGUIComponentInputPanel::MCGUIComponentInputPanel(const QString &mcNamespace, c
 }
 
 MCGUIComponentLabel::MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::LABEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::LABEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentPanel::MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::PANEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::PANEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentScreen::MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
     MCGUIComponent(mcNamespace, name, Type::SCREEN, base, object),
-    MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUIBaseDataBindingComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentScrollbar::MCGUIComponentScrollbar(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::SCROLLBAR, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseScrollbarComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseScrollbarComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentTab::MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::TAB, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::TAB, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
     //
 }
 
