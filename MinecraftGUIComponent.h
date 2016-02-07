@@ -12,6 +12,16 @@
 
 class MinecraftJSONParser;
 
+struct MCGUIVariableExtendComponent {
+    MCGUIComponent* component = nullptr;
+    QJsonObject object;
+    QString name, mcNamespace;
+    MCGUIVariable<QString> extendName;
+    QMap<QString, MCGUIComponent*> components;
+
+    MCGUIComponent *get(const MCGUIContext *context);
+};
+
 struct MCGUIComponent {
 
     enum class Type {
@@ -33,12 +43,12 @@ struct MCGUIComponent {
     Type type;
     MCGUIVariable<bool> ignored;
     QList<Variables> variables;
-    QMap<QString, MCGUIComponent*> controls;
+    QList<MCGUIVariableExtendComponent> controls;
 
-    MCGUIComponent(MinecraftJSONParser& parser, const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object);
 
     static Type getTypeFromString(const QString& type);
-    static MCGUIComponent* createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object);
+    static MCGUIComponent* createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) = 0;
 
@@ -316,7 +326,7 @@ struct MCGUIBaseTabComponent {
 
 struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
-    MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -324,7 +334,7 @@ struct MCGUIComponentButton : public MCGUIComponent, public MCGUIBaseControl, pu
 
 struct MCGUIComponentCarouselLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
 
-    MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -332,7 +342,7 @@ struct MCGUIComponentCarouselLabel : public MCGUIComponent, public MCGUIBaseCont
 
 struct MCGUIComponentCustom : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseCustomRendererComponent {
 
-    MCGUIComponentCustom(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -340,7 +350,7 @@ struct MCGUIComponentCustom : public MCGUIComponent, public MCGUIBaseControl, pu
 
 struct MCGUIComponentEditBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextEditComponent {
 
-    MCGUIComponentEditBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -348,7 +358,7 @@ struct MCGUIComponentEditBox : public MCGUIComponent, public MCGUIBaseControl, p
 
 struct MCGUIComponentGrid : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseGridComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUIComponentGrid(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -356,7 +366,7 @@ struct MCGUIComponentGrid : public MCGUIComponent, public MCGUIBaseControl, publ
 
 struct MCGUIComponentGridItem : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseGridItemComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUIComponentGridItem(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentGridItem(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -364,7 +374,7 @@ struct MCGUIComponentGridItem : public MCGUIComponent, public MCGUIBaseControl, 
 
 struct MCGUIComponentImage : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSpriteComponent {
 
-    MCGUIComponentImage(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -372,7 +382,7 @@ struct MCGUIComponentImage : public MCGUIComponent, public MCGUIBaseControl, pub
 
 struct MCGUIComponentInputPanel : public MCGUIComponent, public MCGUIBaseInputComponent {
 
-    MCGUIComponentInputPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return {0.f, 0.f}; }
 
@@ -380,7 +390,7 @@ struct MCGUIComponentInputPanel : public MCGUIComponent, public MCGUIBaseInputCo
 
 struct MCGUIComponentLabel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseTextComponent {
 
-    MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -388,7 +398,7 @@ struct MCGUIComponentLabel : public MCGUIComponent, public MCGUIBaseControl, pub
 
 struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -396,7 +406,7 @@ struct MCGUIComponentPanel : public MCGUIComponent, public MCGUIBaseControl, pub
 
 struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUIComponentScreen(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
 
@@ -404,7 +414,7 @@ struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBinding
 
 struct MCGUIComponentScrollbar : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseScrollbarComponent {
 
-    MCGUIComponentScrollbar(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentScrollbar(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
 
@@ -412,7 +422,7 @@ struct MCGUIComponentScrollbar : public MCGUIComponent, public MCGUIBaseControl,
 
 struct MCGUIComponentScrollbarBox : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUIComponentScrollbarBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return context->screenSize; }
 
@@ -420,7 +430,7 @@ struct MCGUIComponentScrollbarBox : public MCGUIComponent, public MCGUIBaseContr
 
 struct MCGUIComponentTab : public MCGUIComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseLayoutComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
 
-    MCGUIComponentTab(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return size.get(context).get(context); }
 
@@ -430,7 +440,7 @@ struct MCGUIUnknownComponent : public MCGUIComponent {
 
     QJsonObject object;
 
-    MCGUIUnknownComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
+    MCGUIUnknownComponent(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
     virtual Vec2 calculateSize(const MCGUIContext *context) { return {0.f, 0.f}; }
 

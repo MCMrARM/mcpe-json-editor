@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <assert.h>
 
 MinecraftJSONParser::MinecraftJSONParser()
 {
@@ -113,13 +114,13 @@ void MinecraftJSONParser::parseComponent(QString name, const QString &mcNamespac
                 newType = component->type;
             }
 
-            MCGUIComponent *newComponent = MCGUIComponent::createComponentOfType(*this, newType, mcNamespace, name, component, object);
+            MCGUIComponent *newComponent = MCGUIComponent::createComponentOfType(newType, mcNamespace, name, component, object);
             callback(newComponent);
         });
     } else {
         qDebug() << "Component type:" << (int) type << "-" << object["type"].toString("");
 
-        MCGUIComponent *component = MCGUIComponent::createComponentOfType(*this, type, mcNamespace, name, nullptr, object);
+        MCGUIComponent *component = MCGUIComponent::createComponentOfType(type, mcNamespace, name, nullptr, object);
         callback(component);
     }
 }
@@ -158,5 +159,5 @@ void MinecraftJSONParser::checkForMissingComponents() {
     for (auto it = resolveCallbacks.begin(); it != resolveCallbacks.end(); it++) {
         qDebug() << "Unresolved callbacks for" << it.key() << "(" << it->count() << ")";
     }
-    abort();
+    assert(resolveCallbacks.size() == 0);
 }

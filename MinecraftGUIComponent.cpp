@@ -7,7 +7,7 @@
 
 const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
 
-MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
+MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name), type(type) {
     ignored.setJSON(object["ignored"], false);
     if (object["variables"].isObject()) {
@@ -23,15 +23,53 @@ MCGUIComponent::MCGUIComponent(MinecraftJSONParser &parser, const QString &mcNam
         for (QJsonValue v : object["controls"].toArray()) {
             if (!v.isObject())
                 continue;
+
             QJsonObject o = v.toObject();
             for (auto i = o.begin(); i != o.end(); i++) {
-                parser.parseComponent(i.key(), mcNamespace, i->toObject(), [this](MCGUIComponent* component) {
-                    if (component != nullptr)
-                        controls[component->mcNamespace + "." + component->name] = component;
-                });
+                QJsonObject io = i->toObject();
+                MCGUIVariableExtendComponent el;
+                QString cName = i.key();
+                int j = cName.indexOf("@");
+                if (j < 0) {
+                    MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(io["type"].toString(""));
+                    el.name = cName;
+                    el.component = MCGUIComponent::createComponentOfType(type, mcNamespace, cName, nullptr, io);
+                    if (el.component != nullptr)
+                        controls.push_back(el);
+                    continue;
+                }
+                el.object = io;
+                el.mcNamespace = mcNamespace;
+                el.name = cName.mid(0, j);
+                el.extendName = cName.mid(j + 1);
+                controls.push_back(el);
             }
         }
     }
+}
+
+MCGUIComponent *MCGUIVariableExtendComponent::get(const MCGUIContext *context) {
+    if (component != nullptr)
+        return component;
+    if (context == nullptr)
+        return nullptr;
+    QString eName = extendName.get(context);
+    if (!eName.contains("."))
+        eName = mcNamespace + "." + eName;
+    if (components.contains(eName))
+        return components[eName];
+    if (context->components.contains(eName)) {
+        MCGUIComponent *extendComponent = context->components[eName];
+        if (extendComponent == nullptr)
+            return nullptr;
+        MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(object["type"].toString(""));
+        if (type == MCGUIComponent::Type::UNKNOWN)
+            type = extendComponent->type;
+        MCGUIComponent *c = MCGUIComponent::createComponentOfType(type, mcNamespace, name, extendComponent, object);
+        components[eName] = c;
+        return c;
+    }
+    return nullptr;
 }
 
 MCGUIComponent::Variables::Variables(const QJsonObject &o) {
@@ -75,7 +113,7 @@ MCGUIComponent::Type MCGUIComponent::getTypeFromString(const QString &type) {
     return Type::UNKNOWN;
 }
 
-MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parser, Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object) {
+MCGUIComponent* MCGUIComponent::createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object) {
     if (base != nullptr && base->type == Type::UNKNOWN) {
         const QJsonObject& baseObject = ((MCGUIUnknownComponent*) base)->object;
         for (auto it = baseObject.begin(); it != baseObject.end(); it++) {
@@ -86,35 +124,35 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(MinecraftJSONParser &parse
 
     switch (type) {
     case Type::BUTTON:
-        return new MCGUIComponentButton(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentButton(mcNamespace, name, base, object);
     case Type::CAROUSEL_LABEL:
-        return new MCGUIComponentCarouselLabel(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentCarouselLabel(mcNamespace, name, base, object);
     case Type::CUSTOM:
-        return new MCGUIComponentCustom(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentCustom(mcNamespace, name, base, object);
     case Type::EDIT_BOX:
-        return new MCGUIComponentEditBox(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentEditBox(mcNamespace, name, base, object);
     case Type::GRID:
-        return new MCGUIComponentGrid(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentGrid(mcNamespace, name, base, object);
     case Type::GRID_ITEM:
-        return new MCGUIComponentGridItem(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentGridItem(mcNamespace, name, base, object);
     case Type::IMAGE:
-        return new MCGUIComponentImage(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentImage(mcNamespace, name, base, object);
     case Type::INPUT_PANEL:
-        return new MCGUIComponentInputPanel(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentInputPanel(mcNamespace, name, base, object);
     case Type::LABEL:
-        return new MCGUIComponentLabel(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentLabel(mcNamespace, name, base, object);
     case Type::PANEL:
-        return new MCGUIComponentPanel(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentPanel(mcNamespace, name, base, object);
     case Type::SCREEN:
-        return new MCGUIComponentScreen(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentScreen(mcNamespace, name, base, object);
     case Type::SCROLLBAR:
-        return new MCGUIComponentScrollbar(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentScrollbar(mcNamespace, name, base, object);
     case Type::SCROLLBAR_BOX:
-        return new MCGUIComponentScrollbarBox(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentScrollbarBox(mcNamespace, name, base, object);
     case Type::TAB:
-        return new MCGUIComponentTab(parser, mcNamespace, name, base, object);
+        return new MCGUIComponentTab(mcNamespace, name, base, object);
     case Type::UNKNOWN:
-        return new MCGUIUnknownComponent(parser, mcNamespace, name, base, object);
+        return new MCGUIUnknownComponent(mcNamespace, name, base, object);
     }
     return nullptr;
 }
@@ -319,91 +357,91 @@ MCGUIBaseTabComponent::MCGUIBaseTabComponent(const MCGUIComponent &component, co
     tabContent.setJSON(object["tab_content"]);
 }
 
-MCGUIComponentButton::MCGUIComponentButton(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::BUTTON, base, object),
+MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::BUTTON, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
+MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentCustom::MCGUIComponentCustom(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::CUSTOM, base, object),
+MCGUIComponentCustom::MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::CUSTOM, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentEditBox::MCGUIComponentEditBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::EDIT_BOX, base, object),
+MCGUIComponentEditBox::MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::EDIT_BOX, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentGrid::MCGUIComponentGrid(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::GRID, base, object),
+MCGUIComponentGrid::MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::GRID, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseGridComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentGridItem::MCGUIComponentGridItem(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::GRID_ITEM, base, object),
+MCGUIComponentGridItem::MCGUIComponentGridItem(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::GRID_ITEM, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseGridItemComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentImage::MCGUIComponentImage(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::IMAGE, base, object),
+MCGUIComponentImage::MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::IMAGE, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentInputPanel::MCGUIComponentInputPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::INPUT_PANEL, base, object),
+MCGUIComponentInputPanel::MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::INPUT_PANEL, base, object),
     MCGUIBaseInputComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentLabel::MCGUIComponentLabel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::LABEL, base, object),
+MCGUIComponentLabel::MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::LABEL, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentPanel::MCGUIComponentPanel(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::PANEL, base, object),
+MCGUIComponentPanel::MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::PANEL, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentScreen::MCGUIComponentScreen(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::SCREEN, base, object),
+MCGUIComponentScreen::MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::SCREEN, base, object),
     MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentScrollbar::MCGUIComponentScrollbar(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::SCROLLBAR, base, object),
+MCGUIComponentScrollbar::MCGUIComponentScrollbar(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::SCROLLBAR, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseScrollbarComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
+MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
     //
 }
 
-MCGUIComponentTab::MCGUIComponentTab(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::TAB, base, object),
+MCGUIComponentTab::MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::TAB, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseLayoutComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
     //
 }
 
-MCGUIUnknownComponent::MCGUIUnknownComponent(MinecraftJSONParser &parser, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(parser, mcNamespace, name, Type::UNKNOWN, base, object), object(object) {
+MCGUIUnknownComponent::MCGUIUnknownComponent(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
+    MCGUIComponent(mcNamespace, name, Type::UNKNOWN, base, object), object(object) {
     //
 }

@@ -81,7 +81,7 @@ struct MCGUIControlVariable {
 
     QString componentName;
 
-    MCGUIComponent* get(MCGUIComponent *ownerComponent);
+    MCGUIComponent* get(MCGUIContext *context, MCGUIComponent *ownerComponent);
     void set(QString name) {
         componentName = name;
     }

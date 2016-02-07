@@ -202,13 +202,15 @@ MCGUIComponent* MCGUIComponentVariable::get(MCGUIContext *context) {
     return context->components[componentName];
 }
 
-MCGUIComponent* MCGUIControlVariable::get(MCGUIComponent *ownerComponent) {
+MCGUIComponent* MCGUIControlVariable::get(MCGUIContext *context, MCGUIComponent *ownerComponent) {
     if (ownerComponent == nullptr)
         return nullptr;
-    if (ownerComponent->controls.contains(componentName))
-        return ownerComponent->controls[componentName];
-    for (MCGUIComponent *child : ownerComponent->controls) {
-        MCGUIComponent *r = get(child);
+    for (MCGUIVariableExtendComponent &child : ownerComponent->controls) {
+        if (child.name == componentName)
+            return child.get(context);
+    }
+    for (MCGUIVariableExtendComponent &child : ownerComponent->controls) {
+        MCGUIComponent *r = get(context, child.get(context));
         if (r != nullptr)
             return r;
     }
