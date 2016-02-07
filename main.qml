@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.1
 import Material 0.2
 import QtQuick.Controls 1.4 as Controls
 import Material.ListItems 0.1 as ListItem
+import MinecraftJSONEditor 1.0
 
 ApplicationWindow {
     visible: true
@@ -42,25 +43,44 @@ ApplicationWindow {
 
         Sidebar {
             id: sidebar
+            objectName: "componentList"
 
             Column {
                 width: parent.width
 
-                ListItem.Standard {
-                    text: "Test"
+                Repeater {
+                    id: componentList
+                    model: componentListModel
+
+                    property string selectedComponent: ""
+
+                    delegate: ListItem.Standard {
+                        text: modelData
+                        selected: modelData === componentList.selectedComponent
+                        onClicked: {
+                            componentList.selectedComponent = modelData
+                            guiEditor.editComponent = modelData
+                        }
+                    }
                 }
             }
         }
-/*
-        Rectangle {
-            id: elements_container
 
-            x: 5
-            y: 5
-            width: Units.dp(320)
-            height: Units.dp(240)
+        MinecraftGUIEditor {
+            id: guiEditor
+            objectName: "gui_editor"
+
+            screenWidth: Units.dp(320)
+            screenHeight: Units.dp(240)
+
+            anchors {
+                left: sidebar.right
+                right: parent.right
+                top: parent.top
+                bottom: parent.bottom
+            }
         }
-*/
+
         actions: [
             Action {
                 id: settingsAction

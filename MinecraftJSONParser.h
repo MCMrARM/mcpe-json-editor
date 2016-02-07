@@ -27,4 +27,6 @@ public:
     void requireComponent(const QString& name, ComponentCallback callback);
 
     void checkForMissingComponents();
+
+    QStringList getComponentNames();
 };

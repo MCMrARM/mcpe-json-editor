@@ -182,13 +182,17 @@ MCGUIBaseDataBindingComponent::MCGUIBaseDataBindingComponent(const MCGUIComponen
 float MCGUILayoutAxis::get(const MCGUIContext *context) {
    MCGUIComponent* component = nullptr;
    Vec2 componentSize;
-   if (context != nullptr && context->componentStack.size() > 0) {
-       if (context->componentStack.size() > 1) {
-           component = context->componentStack[context->componentStack.size() - 2];
+   if (context != nullptr) {
+       if (context->componentStack.size() > 0) {
+           if (context->componentStack.size() > 1) {
+               component = context->componentStack[context->componentStack.size() - 2];
+           } else {
+               component = context->componentStack.last();
+           }
+           componentSize = component->calculateSize(context);
        } else {
-           component = context->componentStack.last();
+           componentSize = context->screenSize;
        }
-       componentSize = component->calculateSize(context);
    }
 
    float retVal = 0.f;

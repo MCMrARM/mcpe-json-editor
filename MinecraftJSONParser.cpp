@@ -161,3 +161,11 @@ void MinecraftJSONParser::checkForMissingComponents() {
     }
     assert(resolveCallbacks.size() == 0);
 }
+
+QStringList MinecraftJSONParser::getComponentNames() {
+    QStringList l;
+    for (auto i = resolvedComponents.begin(); i != resolvedComponents.end(); i++) {
+        l.push_back(i.key());
+    }
+    return l;
+}
