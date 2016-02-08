@@ -203,6 +203,10 @@ float MCGUILayoutAxis::get(MCGUIContext *context) {
 }
 
 void MCGUILayoutAxis::set(const QJsonValue &obj) {
+    if (obj.isDouble()) {
+        this->components.push_back({Component::Unit::PIXELS, (float) obj.toDouble()});
+        return;
+    }
     set(obj.toString(""));
 }
 
