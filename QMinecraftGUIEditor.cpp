@@ -229,12 +229,24 @@ QSGNode *QMinecraftGUIEditor::buildNode(MCGUIContext &context, MCGUIComponent *c
             ret->appendChildNode(borderNode);
         }
 
+        QMap<int, QList<QSGNode*>> nodes;
         for (auto& control : component->controls) {
             MCGUIComponent *child = control.get(&context);
             if (child != nullptr) {
                 QSGNode *node = buildNode(context, child, off);
-                if (node != nullptr)
-                    ret->appendChildNode(node);
+                if (node != nullptr) {
+                    int layer = 0;
+                    if (MCGUIIsOfBaseType(child, Control)) {
+                        MCGUIBaseControl *control = MCGUICastToType(child, MCGUIBaseControl);
+                        layer = control->layer.get(&context);
+                    }
+                    nodes[layer].push_back(node);
+                }
+            }
+        }
+        for (QList<QSGNode*> &list : nodes) {
+            for (QSGNode *el : list) {
+                ret->appendChildNode(el);
             }
         }
     }
