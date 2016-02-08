@@ -27,4 +27,5 @@ HEADERS += \
     MinecraftGUIVariable.h \
     MinecraftGUIContext.h \
     MinecraftGUIButtonId.h \
-    QMinecraftGUIEditor.h
+    QMinecraftGUIEditor.h \
+    Vec4.h

@@ -2,11 +2,15 @@
 
 #include <QQuickItem>
 #include <QString>
+#include <QMap>
+#include <QRectF>
 #include "Vec2.h"
+#include "Vec4.h"
 
 class MinecraftJSONParser;
 class MCGUIComponent;
 class MCGUIContext;
+class QSGTexture;
 
 class QMinecraftGUIEditor : public QQuickItem
 {
@@ -21,6 +25,16 @@ class QMinecraftGUIEditor : public QQuickItem
     qreal mScreenWidth, mScreenHeight;
     bool mRebuildComponent = true;
     bool mDrawDebugLines = true;
+
+    struct TextureInfo {
+        QSGTexture* texture;
+        int width, height;
+
+        QRectF getUV(Vec4 r);
+    };
+
+    QMap<QString, TextureInfo*> textures;
+    TextureInfo *getTexture(QString tex);
 
 public:
     QMinecraftGUIEditor(QQuickItem *parent = 0);

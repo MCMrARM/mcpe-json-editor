@@ -5,6 +5,7 @@
 #include <QString>
 #include <QJsonArray>
 #include "Vec2.h"
+#include "Vec4.h"
 
 template <>
 void MCGUIVariable<bool>::setVal(QJsonValue val, bool def) {
@@ -36,6 +37,19 @@ void MCGUIVariable<IVec2>::setVal(QJsonValue val, IVec2 def) {
     if (val.isArray()) {
         QJsonArray a = val.toArray();
         this->val = {a[0].toInt(def.x), a[1].toInt(def.y)};
+        return;
+    }
+    this->val = def;
+}
+template <>
+void MCGUIVariable<Vec4>::setVal(QJsonValue val, Vec4 def) {
+    if (val.isArray()) {
+        QJsonArray a = val.toArray();
+        this->val = {(float) a[0].toDouble(def.x), (float) a[1].toDouble(def.y), (float) a[2].toDouble(def.x2), (float) a[3].toDouble(def.y2)};
+        return;
+    } else if (val.isDouble()) {
+        float f = (float) val.toDouble();
+        this->val = {f, f, f, f};
         return;
     }
     this->val = def;

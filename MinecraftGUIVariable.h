@@ -57,7 +57,9 @@ public:
     MCGUIAnimatedVariable() : MCGUIVariable<T>() {
         //
     }
-    MCGUIAnimatedVariable(QJsonValue val) : MCGUIVariable<T>(val) {
+    MCGUIAnimatedVariable(T val) : MCGUIVariable<T>(val) {
+    }
+    MCGUIAnimatedVariable(QJsonValue val, T def) : MCGUIVariable<T>(val, def) {
     }
 
 };

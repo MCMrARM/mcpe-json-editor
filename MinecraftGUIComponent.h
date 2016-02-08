@@ -6,6 +6,7 @@
 #include <QList>
 #include <QMap>
 #include "Vec2.h"
+#include "Vec4.h"
 #include "MinecraftGUIVariable.h"
 #include "MinecraftGUIBindings.h"
 #include "MinecraftGUIButtonId.h"
@@ -283,7 +284,7 @@ struct MCGUIBaseGridItemComponent {
 
 enum class MCGUIDirection {
 
-    LEFT, RIGHT, UP, DOWN, CENTER
+    NONE, LEFT, RIGHT, UP, DOWN, CENTER
 
 };
 
@@ -292,12 +293,12 @@ struct MCGUIBaseSpriteComponent {
     MCGUIVariable<QString> texture;
     MCGUIAnimatedVariable<Vec2> uv;
     MCGUIVariable<Vec2> uvSize;
-    MCGUIVariable<float> alpha;
-    MCGUIAnimatedVariable<MCGUIColor> color;
-    MCGUIVariable<Vec2> ninesliceSize;
-    MCGUIVariable<bool> tiled;
-    MCGUIVariable<MCGUIDirection> clipDirection;
-    MCGUIAnimatedVariable<float> clipRatio;
+    MCGUIVariable<float> alpha = 1.f;
+    MCGUIAnimatedVariable<MCGUIColor> color = MCGUIColor::WHITE;
+    MCGUIVariable<Vec4> ninesliceSize;
+    MCGUIVariable<bool> tiled = false;
+    MCGUIVariable<MCGUIDirection> clipDirection = MCGUIDirection::NONE;
+    MCGUIAnimatedVariable<float> clipRatio = 1.f;
 
     MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 

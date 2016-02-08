@@ -70,8 +70,8 @@ ApplicationWindow {
             id: guiEditor
             objectName: "gui_editor"
 
-            screenWidth: Units.dp(320)
-            screenHeight: Units.dp(240)
+            screenWidth: Units.dp(640)
+            screenHeight: Units.dp(480)
 
             anchors {
                 left: sidebar.right

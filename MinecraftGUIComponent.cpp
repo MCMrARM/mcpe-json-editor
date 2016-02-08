@@ -334,7 +334,7 @@ MCGUIBaseGridItemComponent::MCGUIBaseGridItemComponent(const MCGUIComponent &com
     gridPosition.setJSON(object["grid_position"]);
 }
 
-MCGUIBaseSpriteComponent::MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
+MCGUIBaseSpriteComponent::MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : uv({0.f, 0.f}), uvSize({0.f, 0.f}), ninesliceSize({0.f, 0.f, 0.f, 0.f}) {
     MCGUICopyBaseProperties(base, SpriteComponent);
     texture.setJSON(object["texture"]);
     uv.setJSON(object["uv"]);
