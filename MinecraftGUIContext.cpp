@@ -39,7 +39,7 @@ Vec2 MCGUIContext::getParentComponentSize() {
     if (componentStack.size() > 0) {
         MCGUIComponent *component = componentStack.last();
         componentStack.pop_back();
-        componentSize = component->calculateSize(this);
+        componentSize = componentStack.last()->calculateSize(this);
         componentStack.push_back(component);
     } else {
         componentSize = screenSize;
