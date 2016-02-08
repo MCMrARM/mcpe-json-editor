@@ -41,7 +41,7 @@ public:
 
     QSGNode *updatePaintNode(QSGNode *, UpdatePaintNodeData *);
 
-    QSGNode *buildNode(MCGUIContext &context, MCGUIComponent *component, Vec2 off);
+    QSGNode *buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUIContext &context, MCGUIComponent *component, Vec2 off, int layer);
 
     void setMinecraftJSONParser(MinecraftJSONParser *parser) {
         mParser = parser;

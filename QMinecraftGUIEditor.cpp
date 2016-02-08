@@ -63,9 +63,13 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
             MCGUIContext context (mParser->resolvedComponents);
             context.screenSize = {mScreenWidth, mScreenHeight};
 
-            QSGNode *node = buildNode(context, mEditComponent, {5.f, 5.f});
-            if (node != nullptr)
-                container->appendChildNode(node);
+            QMap<int, QList<QSGNode*>> nodes;
+            buildNode(nodes, context, mEditComponent, {5.f, 5.f}, 0);
+            for (QList<QSGNode*> &list : nodes) {
+                for (QSGNode *node : list) {
+                    container->appendChildNode(node);
+                }
+            }
         }
         n->appendChildNode(container);
     }
@@ -114,7 +118,7 @@ QSGNode *buildImageNode(QSGTextureMaterial *material, QRectF rect, QRectF uv) {
     return node;
 }
 
-QSGNode *QMinecraftGUIEditor::buildNode(MCGUIContext &context, MCGUIComponent *component, Vec2 off) {
+QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUIContext &context, MCGUIComponent *component, Vec2 off, int layer) {
     qDebug() << "Draw:" << (int) component->type << component->mcNamespace << "." << component->name;
     if (component->base != nullptr)
         qDebug() << "@" << component->base->mcNamespace << "." << component->base->name;
@@ -127,6 +131,11 @@ QSGNode *QMinecraftGUIEditor::buildNode(MCGUIContext &context, MCGUIComponent *c
     Vec2 size = component->calculateSize(&context);
     qDebug() << "Pos:" << pos.x << pos.y << size.x << size.y;
     float alpha = 1.f;
+    if (MCGUIIsOfBaseType(component, Control)) {
+        MCGUIBaseControl *control = MCGUICastToType(component, MCGUIBaseControl);
+        layer += control->layer.get(&context);
+    }
+
     switch (component->type) {
     case MCGUIComponent::Type::IMAGE: {
         qDebug() << "Draw image";
@@ -197,13 +206,13 @@ QSGNode *QMinecraftGUIEditor::buildNode(MCGUIContext &context, MCGUIComponent *c
     }
     if (ret != nullptr) {
         if (alpha != 1.f) {
-            QSGNode *container = new QSGNode();
+            //QSGNode *container = new QSGNode();
             QSGOpacityNode *node = new QSGOpacityNode();
             node->setFlag(QSGNode::OwnedByParent);
             node->setOpacity(alpha);
             node->appendChildNode(ret);
-            container->appendChildNode(node);
-            ret = container;
+            //container->appendChildNode(node);
+            ret = node;
         }
 
         if (mDrawDebugLines) {
@@ -229,24 +238,12 @@ QSGNode *QMinecraftGUIEditor::buildNode(MCGUIContext &context, MCGUIComponent *c
             ret->appendChildNode(borderNode);
         }
 
-        QMap<int, QList<QSGNode*>> nodes;
+        nodes[layer].push_back(ret);
+
         for (auto& control : component->controls) {
             MCGUIComponent *child = control.get(&context);
             if (child != nullptr) {
-                QSGNode *node = buildNode(context, child, off);
-                if (node != nullptr) {
-                    int layer = 0;
-                    if (MCGUIIsOfBaseType(child, Control)) {
-                        MCGUIBaseControl *control = MCGUICastToType(child, MCGUIBaseControl);
-                        layer = control->layer.get(&context);
-                    }
-                    nodes[layer].push_back(node);
-                }
-            }
-        }
-        for (QList<QSGNode*> &list : nodes) {
-            for (QSGNode *el : list) {
-                ret->appendChildNode(el);
+                buildNode(nodes, context, child, off, layer);
             }
         }
     }
