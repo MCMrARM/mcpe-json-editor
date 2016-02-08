@@ -184,20 +184,7 @@ MCGUIBaseDataBindingComponent::MCGUIBaseDataBindingComponent(const MCGUIComponen
 
 }
 
-float MCGUILayoutAxis::get(MCGUIContext *context) {
-   MCGUIComponent* component = nullptr;
-   Vec2 componentSize;
-   if (context != nullptr) {
-       if (context->componentStack.size() > 0) {
-           component = context->componentStack.last();
-           context->componentStack.pop_back();
-           componentSize = component->calculateSize(context);
-           context->componentStack.push_back(component);
-       } else {
-           componentSize = context->screenSize;
-       }
-   }
-
+float MCGUILayoutAxis::get(Vec2 componentSize) {
    float retVal = 0.f;
    for (Component const& c : components) {
        if (c.unit == Component::Unit::PIXELS) {
@@ -209,6 +196,10 @@ float MCGUILayoutAxis::get(MCGUIContext *context) {
        }
    }
    return retVal;
+}
+
+float MCGUILayoutAxis::get(MCGUIContext *context) {
+   return get(context->getParentComponentSize());
 }
 
 void MCGUILayoutAxis::set(const QJsonValue &obj) {
@@ -245,6 +236,39 @@ void MCGUILayoutAxis::set(const QString &str) {
         }
         components.push_back(c);
     }
+}
+
+Vec2 getAnchorPos(Vec2 size, MCGUIAnchorPoint point) {
+    switch (point) {
+    case MCGUIAnchorPoint::TOP_LEFT:
+        return {0.f, 0.f};
+    case MCGUIAnchorPoint::TOP_MIDDLE:
+        return {size.x / 2, 0.f};
+    case MCGUIAnchorPoint::TOP_RIGHT:
+        return {size.x, 0.f};
+    case MCGUIAnchorPoint::LEFT_MIDDLE:
+        return {0.f, size.y / 2};
+    case MCGUIAnchorPoint::CENTER:
+        return {size.x / 2, size.y / 2};
+    case MCGUIAnchorPoint::RIGHT_MIDDLE:
+        return {size.x, size.y / 2};
+    case MCGUIAnchorPoint::BOTTOM_LEFT:
+        return {0.f, size.y};
+    case MCGUIAnchorPoint::BOTTOM_MIDDLE:
+        return {size.x / 2, size.y};
+    case MCGUIAnchorPoint::BOTTOM_RIGHT:
+        return {size.x, size.y};
+    }
+    return {0.f, 0.f};
+}
+
+Vec2 MCGUILayoutComponent::getPos(MCGUIContext *context) {
+    Vec2 parentSize = context->getParentComponentSize();
+    Vec2 off = offset.get(context).get(parentSize);
+    Vec2 size = calculateSize(context);
+    Vec2 parentAnchorPos = getAnchorPos(parentSize, anchorFrom.get(context));
+    Vec2 myAnchorPos = getAnchorPos(size, anchorTo.get(context));
+    return parentAnchorPos - myAnchorPos + off;
 }
 
 MCGUIBaseLayoutComponent::MCGUIBaseLayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {

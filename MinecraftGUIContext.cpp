@@ -32,3 +32,17 @@ void MCGUIContext::exit() {
     prevVariables.pop_back();
     componentStack.pop_back();
 }
+
+
+Vec2 MCGUIContext::getParentComponentSize() {
+    Vec2 componentSize;
+    if (componentStack.size() > 0) {
+        MCGUIComponent *component = componentStack.last();
+        componentStack.pop_back();
+        componentSize = component->calculateSize(this);
+        componentStack.push_back(component);
+    } else {
+        componentSize = screenSize;
+    }
+    return componentSize;
+}

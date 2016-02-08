@@ -117,6 +117,7 @@ struct MCGUILayoutAxis {
     std::vector<Component> components;
 
     float get(MCGUIContext *context);
+    float get(Vec2 parentSize);
 
     void set(const QString &str);
     void set(const QJsonValue &obj);
@@ -131,8 +132,11 @@ struct MCGUILayoutOffset {
         //
     }
 
+    Vec2 get(Vec2 parentSize) {
+        return { x.get(parentSize), y.get(parentSize) };
+    }
     Vec2 get(MCGUIContext *context) {
-        return { x.get(context), y.get(context) };
+       return get(context->getParentComponentSize());
     }
 
 };
@@ -333,9 +337,7 @@ struct MCGUILayoutComponent : public MCGUIComponent, public MCGUIBaseLayoutCompo
         //
     }
 
-    virtual Vec2 getPos(MCGUIContext *context) {
-        return offset.get(context).get(context);
-    }
+    virtual Vec2 getPos(MCGUIContext *context);
     virtual Vec2 calculateSize(MCGUIContext *context) {
         return size.get(context).get(context);
     }

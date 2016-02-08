@@ -23,4 +23,6 @@ public:
     void enter(MCGUIComponent* component);
     void exit();
 
+    Vec2 getParentComponentSize();
+
 };
