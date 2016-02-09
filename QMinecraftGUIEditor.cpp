@@ -52,6 +52,13 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
     }
     n->setRect(boundingRect());
 
+    if (!font.hasTexture()) {
+        QImage img (QString("images/font/default8.png"));
+        assert(!img.isNull());
+        QSGTexture *texObj = window()->createTextureFromImage(img);
+        font.setTexture(img, texObj);
+    }
+
     if (mRebuildComponent) {
         n->removeAllChildNodes();
         QSGSimpleRectNode *container = new QSGSimpleRectNode();

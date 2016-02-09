@@ -108,7 +108,6 @@ void QSGColorTextureMaterialShader::updateState(const RenderState &state, QSGMat
                     c.greenF() *  opacity,
                     c.blueF() * opacity,
                     opacity);
-        qDebug() << c.redF() << c.greenF() << c.blueF() << c.alphaF();
         program()->setUniformValue(m_color_id, v);
     }
 }

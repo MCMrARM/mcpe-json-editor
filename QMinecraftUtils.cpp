@@ -15,7 +15,6 @@ void QMinecraftUtils::setTexturedRectsGeometry(QSGGeometry *geometry, const QLis
     QSGGeometry::TexturedPoint2D *v = geometry->vertexDataAsTexturedPoint2D();
     int off = 0;
     while (itRects != rects.end() && itUvs != uvs.end()) {
-        qDebug() << off;
         QRectF rect = *itRects;
         QRectF uv = *itUvs;
         v[off].x = rect.left();
