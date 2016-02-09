@@ -232,6 +232,14 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         textOff = (textOff * mPixelSize).floor();
         QSGNode *node = mFont.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor, mPixelSize);
         node->setFlag(QSGNode::OwnedByParent);
+        if (label->shadow.get(&context)) {
+            QColor qcolor2;
+            qcolor2.setRgbF(color.r / 4, color.g / 4, color.b / 4, color.a);
+            QSGNode *node2 = mFont.build({pos.x + textOff.x + mPixelSize, pos.y + textOff.y + mPixelSize}, text, qcolor2, mPixelSize);
+            node2->setFlag(QSGNode::OwnedByParent);
+            node2->appendChildNode(node);
+            node = node2;
+        }
         ret = node;
     }
         break;

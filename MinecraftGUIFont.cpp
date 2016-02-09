@@ -41,8 +41,6 @@ void MinecraftGUIFont::updateTextureCharSizes(const QImage &img) {
             int x = baseX + w;
             bool foundPixel = false;
             for (int y = baseY; y < maxY; y++) {
-                if (i == 84)
-                    qDebug() << x << y << qAlpha(img.pixel(x, y));
                 if (qAlpha(img.pixel(x, y)) > 0) {
                     foundPixel = true;
                     break;
