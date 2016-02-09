@@ -36,8 +36,8 @@ public:
 
     int getDefaultMappingId(QChar c);
 
-    QSGNode *build(QPointF pos, const QString &text, QColor color);
-    void build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text);
+    QSGNode *build(QPointF pos, const QString &text, QColor color, float scale);
+    void build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text, float scale);
 
     int calculateWidth(const QString &text);
 

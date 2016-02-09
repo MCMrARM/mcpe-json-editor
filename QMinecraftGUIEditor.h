@@ -19,14 +19,16 @@ class QMinecraftGUIEditor : public QQuickItem
 
     Q_PROPERTY(qreal screenWidth READ screenWidth WRITE setScreenWidth NOTIFY screenWidthChanged)
     Q_PROPERTY(qreal screenHeight READ screenHeight WRITE setScreenHeight NOTIFY screenHeightChanged)
+    Q_PROPERTY(qreal dpSize READ dpSize WRITE setMinecraftPixelSize NOTIFY dpSizeChanged)
     Q_PROPERTY(QString editComponent READ editComponentString WRITE setEditComponent NOTIFY editComponentChanged)
 
     MinecraftJSONParser *mParser;
     MCGUIComponent *mEditComponent = nullptr;
-    MinecraftGUIFont font;
+    MinecraftGUIFont mFont;
     qreal mScreenWidth, mScreenHeight;
     bool mRebuildComponent = true;
     bool mDrawDebugLines = false;
+    qreal mPixelSize = 2.f;
 
     struct TextureInfo {
         QSGTexture* texture;
@@ -60,13 +62,19 @@ public:
     qreal screenHeight() const {
         return mScreenHeight;
     }
+    qreal dpSize() const {
+        return mPixelSize;
+    }
 
     void setScreenWidth(qreal val);
     void setScreenHeight(qreal val);
 
+    void setMinecraftPixelSize(qreal val);
+
 signals:
     void screenWidthChanged(qreal val);
     void screenHeightChanged(qreal val);
+    void dpSizeChanged(qreal val);
     void editComponentChanged(QString const &val);
 
 };

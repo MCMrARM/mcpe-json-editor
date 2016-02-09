@@ -63,13 +63,13 @@ int MinecraftGUIFont::getDefaultMappingId(QChar c) {
     return -1;
 }
 
-QSGNode *MinecraftGUIFont::build(QPointF pos, const QString &text, QColor color) {
+QSGNode *MinecraftGUIFont::build(QPointF pos, const QString &text, QColor color, float scale) {
     QSGColorTextureMaterial *material = new QSGColorTextureMaterial();
-    //material->setColor(color);
+    material->setColor(color);
     material->setTexture(texture);
 
     QList<QRectF> rects, uvs;
-    build(pos, rects, uvs, text);
+    build(pos, rects, uvs, text, scale);
 
     QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), rects.count() * 4);
     QMinecraftUtils::setTexturedRectsGeometry(geometry, rects, uvs);
@@ -82,7 +82,7 @@ QSGNode *MinecraftGUIFont::build(QPointF pos, const QString &text, QColor color)
     return node;
 }
 
-void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text) {
+void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text, float scale) {
     int bw = textureCharWidth;
     int h = textureCharHeight;
     for (QChar c : text) {
@@ -95,10 +95,10 @@ void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &u
 
         int w = textureCharWidths[i];
 
-        rects.push_back(QRectF(pos.x(), pos.y(), w, h));
+        rects.push_back(QRectF(pos.x(), pos.y(), w * scale, h * scale));
         uvs.push_back(QRectF((float) texX/textureWidth, (float) texY/textureHeight, (float) w/textureWidth, (float) h/textureHeight));
 
-        pos.setX(pos.x() + w + 1);
+        pos.setX(pos.x() + w * scale + 1);
     }
 }
 

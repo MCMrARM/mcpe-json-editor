@@ -40,6 +40,13 @@ void QMinecraftGUIEditor::setScreenHeight(qreal val) {
     update();
 }
 
+void QMinecraftGUIEditor::setMinecraftPixelSize(qreal val) {
+    mPixelSize = val;
+    emit dpSizeChanged(val);
+    mRebuildComponent = true;
+    update();
+}
+
 QString QMinecraftGUIEditor::editComponentString() {
     return (mEditComponent == nullptr ? "" : (mEditComponent->mcNamespace + "." + mEditComponent->name));
 }
@@ -52,14 +59,15 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
     }
     n->setRect(boundingRect());
 
-    if (!font.hasTexture()) {
+    if (!mFont.hasTexture()) {
         QImage img (QString("images/font/default8.png"));
         assert(!img.isNull());
         QSGTexture *texObj = window()->createTextureFromImage(img);
-        font.setTexture(img, texObj);
+        mFont.setTexture(img, texObj);
     }
 
     if (mRebuildComponent) {
+        mRebuildComponent = false;
         n->removeAllChildNodes();
         QSGSimpleRectNode *container = new QSGSimpleRectNode();
         container->setColor(Qt::black);
@@ -156,9 +164,9 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
     pos.x += off.x;
     pos.y += off.y;
     off = pos;
-    pos = pos.floor();
+    pos = (pos * mPixelSize).floor();
     Vec2 size = component->calculateSize(&context);
-    size = size.floor();
+    size = (size * mPixelSize).floor();
     qDebug() << "Pos:" << pos.x << pos.y << size.x << size.y;
     float alpha = 1.f;
     if (MCGUIIsOfBaseType(component, Control)) {
@@ -187,24 +195,25 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         material->setTexture(tex->texture);
         Vec2 uv = image->uv.get(&context);
         Vec2 uvSize = image->uvSize.get(&context);
-        Vec4 ns = image->ninesliceSize.get(&context);
+        Vec4 nsUv = image->ninesliceSize.get(&context);
+        Vec4 ns = nsUv * mPixelSize;
 
         qDebug() << uv.x << uv.y << uvSize.x << uvSize.y << tex->width << tex->height;
         qDebug() << ns.x << ns.y << ns.x2 << ns.y2;
 
         QList<QRectF> rects, uvs;
-        appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + ns.y, size.x - ns.x - ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + ns.x, uv.y + ns.y, uvSize.x - ns.x - ns.x2, uvSize.y - ns.y - ns.y2}));
+        appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + ns.y, size.x - ns.x - ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + nsUv.x, uv.y + nsUv.y, uvSize.x - nsUv.x - nsUv.x2, uvSize.y - nsUv.y - nsUv.y2}));
 
         if (ns.x != 0.f || ns.y != 0.f || ns.x2 != 0.f || ns.y2 != 0.f) {
-            appendImageRect(rects, uvs, {pos.x, pos.y, ns.x, ns.y}, tex->getUV({uv.x, uv.y, ns.x, ns.y}));
-            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y, ns.x2, ns.y}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y, ns.x2, ns.y}));
-            appendImageRect(rects, uvs, {pos.x, pos.y + size.y - ns.y2, ns.x, ns.y2}, tex->getUV({uv.x, uv.y + uvSize.y - ns.y2, ns.x, ns.y2}));
-            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + size.y - ns.y2, ns.x2, ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + uvSize.y - ns.y2, ns.x2, ns.y2}));
+            appendImageRect(rects, uvs, {pos.x, pos.y, ns.x, ns.y}, tex->getUV({uv.x, uv.y, nsUv.x, nsUv.y}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y, ns.x2, ns.y}, tex->getUV({uv.x + uvSize.x - nsUv.x2, uv.y, nsUv.x2, nsUv.y}));
+            appendImageRect(rects, uvs, {pos.x, pos.y + size.y - ns.y2, ns.x, ns.y2}, tex->getUV({uv.x, uv.y + uvSize.y - nsUv.y2, nsUv.x, nsUv.y2}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + size.y - ns.y2, ns.x2, ns.y2}, tex->getUV({uv.x + uvSize.x - nsUv.x2, uv.y + uvSize.y - nsUv.y2, nsUv.x2, nsUv.y2}));
 
-            appendImageRect(rects, uvs, {pos.x, pos.y + ns.y, ns.x, size.y - ns.y - ns.y2}, tex->getUV({uv.x, uv.y + ns.y, ns.x, uvSize.y - ns.y - ns.y2}));
-            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + ns.y, ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + ns.y, ns.x2, uvSize.y - ns.y - ns.y2}));
-            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y, size.x - ns.x - ns.x2, ns.y}, tex->getUV({uv.x + ns.x, uv.y, uvSize.x - ns.x - ns.x2, ns.y}));
-            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + size.y - ns.y2, size.x - ns.x - ns.x2, ns.y2}, tex->getUV({uv.x + ns.x, uv.y + uvSize.y - ns.y2, uvSize.x - ns.x - ns.x2, ns.y2}));
+            appendImageRect(rects, uvs, {pos.x, pos.y + ns.y, ns.x, size.y - ns.y - ns.y2}, tex->getUV({uv.x, uv.y + nsUv.y, nsUv.x, uvSize.y - nsUv.y - nsUv.y2}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + ns.y, ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + uvSize.x - nsUv.x2, uv.y + nsUv.y, nsUv.x2, uvSize.y - nsUv.y - nsUv.y2}));
+            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y, size.x - ns.x - ns.x2, ns.y}, tex->getUV({uv.x + nsUv.x, uv.y, uvSize.x - nsUv.x - nsUv.x2, nsUv.y}));
+            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + size.y - ns.y2, size.x - ns.x - ns.x2, ns.y2}, tex->getUV({uv.x + nsUv.x, uv.y + uvSize.y - nsUv.y2, uvSize.x - nsUv.x - nsUv.x2, nsUv.y2}));
         }
 
         QSGNode *node = buildImageNode(material, rects, uvs);
@@ -219,9 +228,9 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         QColor qcolor;
         qcolor.setRgbF(color.r, color.g, color.b, color.a);
         Vec2 textOff = MCGUIGetAnchorPoint(label->calculateSize(&context), label->alignment.get(&context));
-        textOff = textOff - MCGUIGetAnchorPoint({font.calculateWidth(text), font.getCharHeight()}, label->alignment.get(&context));
-        textOff = textOff.floor();
-        QSGNode *node = font.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor);
+        textOff = textOff - MCGUIGetAnchorPoint({mFont.calculateWidth(text), mFont.getCharHeight()}, label->alignment.get(&context));
+        textOff = (textOff * mPixelSize).floor();
+        QSGNode *node = mFont.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor, mPixelSize);
         node->setFlag(QSGNode::OwnedByParent);
         ret = node;
     }

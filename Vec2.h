@@ -19,6 +19,9 @@ struct Vec2 {
     friend Vec2 operator-(const Vec2 &a, const Vec2 &b) {
         return {a.x - b.x, a.y - b.y};
     }
+    friend Vec2 operator*(const Vec2 &a, float b) {
+        return {a.x * b, a.y * b};
+    }
 
 };
 
