@@ -63,6 +63,8 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
             MCGUIContext context (mParser->resolvedComponents);
             context.screenSize = {mScreenWidth, mScreenHeight};
 
+            context.variables["$win10_edition"] = QJsonValue(true);
+
             QMap<int, QList<QSGNode*>> nodes;
             buildNode(nodes, context, mEditComponent, {5.f, 5.f}, 0);
             for (QList<QSGNode*> &list : nodes) {
@@ -137,6 +139,15 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
     }
 
     switch (component->type) {
+    case MCGUIComponent::Type::BUTTON: {
+        qDebug() << "Draw button";
+        QSGSimpleRectNode *node = new QSGSimpleRectNode();
+        node->setFlag(QSGNode::OwnedByParent);
+        node->setColor(Qt::transparent);
+        node->setRect(pos.x, pos.y, size.x, size.y);
+        ret = node;
+    }
+        break;
     case MCGUIComponent::Type::IMAGE: {
         qDebug() << "Draw image";
         MCGUIComponentImage *image = (MCGUIComponentImage*) component;
