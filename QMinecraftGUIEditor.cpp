@@ -156,7 +156,9 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
     pos.x += off.x;
     pos.y += off.y;
     off = pos;
+    pos = pos.floor();
     Vec2 size = component->calculateSize(&context);
+    size = size.floor();
     qDebug() << "Pos:" << pos.x << pos.y << size.x << size.y;
     float alpha = 1.f;
     if (MCGUIIsOfBaseType(component, Control)) {
@@ -218,6 +220,7 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         qcolor.setRgbF(color.r, color.g, color.b, color.a);
         Vec2 textOff = MCGUIGetAnchorPoint(label->calculateSize(&context), label->alignment.get(&context));
         textOff = textOff - MCGUIGetAnchorPoint({font.calculateWidth(text), font.getCharHeight()}, label->alignment.get(&context));
+        textOff = textOff.floor();
         QSGNode *node = font.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor);
         node->setFlag(QSGNode::OwnedByParent);
         ret = node;
