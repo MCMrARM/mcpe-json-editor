@@ -9,7 +9,9 @@ SOURCES += main.cpp \
     MinecraftGUIVariable.cpp \
     MinecraftGUIContext.cpp \
     MinecraftGUIButtonId.cpp \
-    QMinecraftGUIEditor.cpp
+    QMinecraftGUIEditor.cpp \
+    MinecraftGUIFont.cpp \
+    QMinecraftUtils.cpp
 
 RESOURCES += qml.qrc
 
@@ -28,4 +30,6 @@ HEADERS += \
     MinecraftGUIContext.h \
     MinecraftGUIButtonId.h \
     QMinecraftGUIEditor.h \
-    Vec4.h
+    Vec4.h \
+    MinecraftGUIFont.h \
+    QMinecraftUtils.h

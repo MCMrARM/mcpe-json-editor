@@ -6,6 +6,7 @@
 #include <QRectF>
 #include "Vec2.h"
 #include "Vec4.h"
+#include "MinecraftGUIFont.h"
 
 class MinecraftJSONParser;
 class MCGUIComponent;
@@ -22,9 +23,10 @@ class QMinecraftGUIEditor : public QQuickItem
 
     MinecraftJSONParser *mParser;
     MCGUIComponent *mEditComponent = nullptr;
+    MinecraftGUIFont font;
     qreal mScreenWidth, mScreenHeight;
     bool mRebuildComponent = true;
-    bool mDrawDebugLines = true;
+    bool mDrawDebugLines = false;
 
     struct TextureInfo {
         QSGTexture* texture;

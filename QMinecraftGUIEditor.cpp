@@ -8,6 +8,7 @@
 #include <QSGTextureMaterial>
 #include <QQuickWindow>
 #include <QDebug>
+#include <QMinecraftUtils.h>
 #include <assert.h>
 #include "Vec4.h"
 
@@ -119,6 +120,24 @@ QSGNode *buildImageNode(QSGTextureMaterial *material, QRectF rect, QRectF uv) {
     node->setFlag(QSGNode::OwnsGeometry);
     return node;
 }
+void appendImageRect(QList<QRectF> &rects, QList<QRectF> &uvs, QRectF rect, QRectF uv) {
+    if (rect.width() <= 0 || rect.height() <= 0)
+        return;
+    rects.push_back(rect);
+    uvs.push_back(uv);
+}
+QSGNode *buildImageNode(QSGTextureMaterial *material, const QList<QRectF> &rect, const QList<QRectF> &uv) {
+    QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), rect.count() * 4);
+    QMinecraftUtils::setTexturedRectsGeometry(geometry, rect, uv);
+
+    QSGGeometryNode *node = new QSGGeometryNode();
+    node->setFlag(QSGNode::OwnedByParent);
+    node->setMaterial(material);
+    node->setGeometry(geometry);
+    node->setFlag(QSGNode::OwnsMaterial);
+    node->setFlag(QSGNode::OwnsGeometry);
+    return node;
+}
 
 QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUIContext &context, MCGUIComponent *component, Vec2 off, int layer) {
     qDebug() << "Draw:" << (int) component->type << component->mcNamespace << "." << component->name;
@@ -164,35 +183,22 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         qDebug() << uv.x << uv.y << uvSize.x << uvSize.y << tex->width << tex->height;
         qDebug() << ns.x << ns.y << ns.x2 << ns.y2;
 
-        QSGNode *node = buildImageNode(material, {pos.x + ns.x, pos.y + ns.y, size.x - ns.x - ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + ns.x, uv.y + ns.y, uvSize.x - ns.x - ns.x2, uvSize.y - ns.y - ns.y2}));
+        QList<QRectF> rects, uvs;
+        appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + ns.y, size.x - ns.x - ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + ns.x, uv.y + ns.y, uvSize.x - ns.x - ns.x2, uvSize.y - ns.y - ns.y2}));
 
         if (ns.x != 0.f || ns.y != 0.f || ns.x2 != 0.f || ns.y2 != 0.f) {
-            QSGNode *nodeTopLeft = buildImageNode(material, {pos.x, pos.y, ns.x, ns.y}, tex->getUV({uv.x, uv.y, ns.x, ns.y}));
-            QSGNode *nodeTopRight = buildImageNode(material, {pos.x + size.x - ns.x2, pos.y, ns.x2, ns.y}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y, ns.x2, ns.y}));
-            QSGNode *nodeBottomLeft = buildImageNode(material, {pos.x, pos.y + size.y - ns.y2, ns.x, ns.y2}, tex->getUV({uv.x, uv.y + uvSize.y - ns.y2, ns.x, ns.y2}));
-            QSGNode *nodeBottomRight = buildImageNode(material, {pos.x + size.x - ns.x2, pos.y + size.y - ns.y2, ns.x2, ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + uvSize.y - ns.y2, ns.x2, ns.y2}));
+            appendImageRect(rects, uvs, {pos.x, pos.y, ns.x, ns.y}, tex->getUV({uv.x, uv.y, ns.x, ns.y}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y, ns.x2, ns.y}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y, ns.x2, ns.y}));
+            appendImageRect(rects, uvs, {pos.x, pos.y + size.y - ns.y2, ns.x, ns.y2}, tex->getUV({uv.x, uv.y + uvSize.y - ns.y2, ns.x, ns.y2}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + size.y - ns.y2, ns.x2, ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + uvSize.y - ns.y2, ns.x2, ns.y2}));
 
-            QSGNode *nodeLeft = buildImageNode(material, {pos.x, pos.y + ns.y, ns.x, size.y - ns.y - ns.y2}, tex->getUV({uv.x, uv.y + ns.y, ns.x, uvSize.y - ns.y - ns.y2}));
-            QSGNode *nodeRight = buildImageNode(material, {pos.x + size.x - ns.x2, pos.y + ns.y, ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + ns.y, ns.x2, uvSize.y - ns.y - ns.y2}));
-            QSGNode *nodeTop = buildImageNode(material, {pos.x + ns.x, pos.y, size.x - ns.x - ns.x2, ns.y}, tex->getUV({uv.x + ns.x, uv.y, uvSize.x - ns.x - ns.x2, ns.y}));
-            QSGNode *nodeBottom = buildImageNode(material, {pos.x + ns.x, pos.y + size.y - ns.y2, size.x - ns.x - ns.x2, ns.y2}, tex->getUV({uv.x + ns.x, uv.y + uvSize.y - ns.y2, uvSize.x - ns.x - ns.x2, ns.y2}));
-            if (nodeTopLeft != nullptr)
-                node->appendChildNode(nodeTopLeft);
-            if (nodeTopRight != nullptr)
-                node->appendChildNode(nodeTopRight);
-            if (nodeBottomLeft != nullptr)
-                node->appendChildNode(nodeBottomLeft);
-            if (nodeBottomRight != nullptr)
-                node->appendChildNode(nodeBottomRight);
-            if (nodeLeft != nullptr)
-                node->appendChildNode(nodeLeft);
-            if (nodeRight != nullptr)
-                node->appendChildNode(nodeRight);
-            if (nodeTop != nullptr)
-                node->appendChildNode(nodeTop);
-            if (nodeBottom != nullptr)
-                node->appendChildNode(nodeBottom);
+            appendImageRect(rects, uvs, {pos.x, pos.y + ns.y, ns.x, size.y - ns.y - ns.y2}, tex->getUV({uv.x, uv.y + ns.y, ns.x, uvSize.y - ns.y - ns.y2}));
+            appendImageRect(rects, uvs, {pos.x + size.x - ns.x2, pos.y + ns.y, ns.x2, size.y - ns.y - ns.y2}, tex->getUV({uv.x + uvSize.x - ns.x2, uv.y + ns.y, ns.x2, uvSize.y - ns.y - ns.y2}));
+            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y, size.x - ns.x - ns.x2, ns.y}, tex->getUV({uv.x + ns.x, uv.y, uvSize.x - ns.x - ns.x2, ns.y}));
+            appendImageRect(rects, uvs, {pos.x + ns.x, pos.y + size.y - ns.y2, size.x - ns.x - ns.x2, ns.y2}, tex->getUV({uv.x + ns.x, uv.y + uvSize.y - ns.y2, uvSize.x - ns.x - ns.x2, ns.y2}));
         }
+
+        QSGNode *node = buildImageNode(material, rects, uvs);
         ret = node;
     }
         break;
