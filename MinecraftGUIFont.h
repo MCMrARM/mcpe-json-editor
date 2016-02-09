@@ -28,6 +28,6 @@ public:
         return (textureMaterial != nullptr);
     }
 
-
+    void build(const QList<QRectF> &rects, const QList<QRectF> &uvs, QString text);
 
 };

@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>main.qml</file>
+        <file>texture.vert</file>
+        <file>texture.frag</file>
     </qresource>
 </RCC>

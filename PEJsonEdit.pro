@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     MinecraftGUIButtonId.cpp \
     QMinecraftGUIEditor.cpp \
     MinecraftGUIFont.cpp \
-    QMinecraftUtils.cpp
+    QMinecraftUtils.cpp \
+    QSGColorTextureMaterial.cpp
 
 RESOURCES += qml.qrc
 
@@ -32,4 +33,7 @@ HEADERS += \
     QMinecraftGUIEditor.h \
     Vec4.h \
     MinecraftGUIFont.h \
-    QMinecraftUtils.h
+    QMinecraftUtils.h \
+    QSGColorTextureMaterial.h
+
+DISTFILES +=
