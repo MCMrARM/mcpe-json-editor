@@ -36,7 +36,13 @@ public:
 
     int getDefaultMappingId(QChar c);
 
-    QSGNode *build(QPointF pos, QString text, QColor color);
-    void build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, QString text);
+    QSGNode *build(QPointF pos, const QString &text, QColor color);
+    void build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text);
+
+    int calculateWidth(const QString &text);
+
+    int getCharHeight() {
+        return textureCharHeight;
+    }
 
 };

@@ -243,7 +243,7 @@ void MCGUILayoutAxis::set(const QString &str) {
     }
 }
 
-Vec2 getAnchorPos(Vec2 size, MCGUIAnchorPoint point) {
+Vec2 MCGUIGetAnchorPoint(Vec2 size, MCGUIAnchorPoint point) {
     switch (point) {
     case MCGUIAnchorPoint::TOP_LEFT:
         return {0.f, 0.f};
@@ -271,8 +271,8 @@ Vec2 MCGUILayoutComponent::getPos(MCGUIContext *context) {
     Vec2 parentSize = context->getParentComponentSize();
     Vec2 off = offset.get(context).get(parentSize);
     Vec2 size = calculateSize(context);
-    Vec2 parentAnchorPos = getAnchorPos(parentSize, anchorFrom.get(context));
-    Vec2 myAnchorPos = getAnchorPos(size, anchorTo.get(context));
+    Vec2 parentAnchorPos = MCGUIGetAnchorPoint(parentSize, anchorFrom.get(context));
+    Vec2 myAnchorPos = MCGUIGetAnchorPoint(size, anchorTo.get(context));
     return parentAnchorPos - myAnchorPos + off;
 }
 

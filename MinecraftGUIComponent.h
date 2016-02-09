@@ -85,6 +85,8 @@ enum class MCGUIAnchorPoint {
 
 };
 
+Vec2 MCGUIGetAnchorPoint(Vec2 size, MCGUIAnchorPoint point);
+
 enum class MCGUIDraggable {
 
     NOT_DRAGGABLE, HORIZONTAL, VERTICAL, BOTH

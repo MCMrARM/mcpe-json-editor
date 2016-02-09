@@ -63,7 +63,7 @@ int MinecraftGUIFont::getDefaultMappingId(QChar c) {
     return -1;
 }
 
-QSGNode *MinecraftGUIFont::build(QPointF pos, QString text, QColor color) {
+QSGNode *MinecraftGUIFont::build(QPointF pos, const QString &text, QColor color) {
     QSGColorTextureMaterial *material = new QSGColorTextureMaterial();
     //material->setColor(color);
     material->setTexture(texture);
@@ -82,7 +82,7 @@ QSGNode *MinecraftGUIFont::build(QPointF pos, QString text, QColor color) {
     return node;
 }
 
-void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, QString text) {
+void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &uvs, const QString &text) {
     int bw = textureCharWidth;
     int h = textureCharHeight;
     for (QChar c : text) {
@@ -100,4 +100,15 @@ void MinecraftGUIFont::build(QPointF pos, QList<QRectF> &rects, QList<QRectF> &u
 
         pos.setX(pos.x() + w + 1);
     }
+}
+
+int MinecraftGUIFont::calculateWidth(const QString &text) {
+    int w = 0;
+    for (QChar c : text) {
+        int i = getDefaultMappingId(c);
+        if (i == -1)
+            continue;
+        w += textureCharWidths[i] + 1;
+    }
+    return (w > 0 ? (w - 1) : 0);
 }

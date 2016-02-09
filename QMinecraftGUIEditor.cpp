@@ -209,6 +209,20 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         ret = node;
     }
         break;
+    case MCGUIComponent::Type::LABEL: {
+        qDebug() << "Draw label";
+        MCGUIComponentLabel *label = (MCGUIComponentLabel*) component;
+        MCGUIColor color = label->color.get(&context);
+        QString text = label->text.get(&context);
+        QColor qcolor;
+        qcolor.setRgbF(color.r, color.g, color.b, color.a);
+        Vec2 textOff = MCGUIGetAnchorPoint(label->calculateSize(&context), label->alignment.get(&context));
+        textOff = textOff - MCGUIGetAnchorPoint({font.calculateWidth(text), font.getCharHeight()}, label->alignment.get(&context));
+        QSGNode *node = font.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor);
+        node->setFlag(QSGNode::OwnedByParent);
+        ret = node;
+    }
+        break;
     case MCGUIComponent::Type::PANEL: {
         qDebug() << "Draw panel";
         QSGSimpleRectNode *node = new QSGSimpleRectNode();
