@@ -243,7 +243,8 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         ret = node;
     }
         break;
-    case MCGUIComponent::Type::PANEL: {
+    case MCGUIComponent::Type::PANEL:
+    case MCGUIComponent::Type::INPUT_PANEL: {
         qDebug() << "Draw panel";
         QSGSimpleRectNode *node = new QSGSimpleRectNode();
         node->setFlag(QSGNode::OwnedByParent);

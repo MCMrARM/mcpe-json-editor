@@ -3,7 +3,6 @@
 #include "MinecraftJSONParser.h"
 #include <QJsonArray>
 #include <QRegularExpression>
-#include <QDebug>
 
 const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
 
@@ -15,6 +14,14 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
         controls = base->controls;
     }
     ignored.setJSON(object["ignored"], false);
+    {
+        Variables vars;
+        for (auto i = object.begin(); i != object.end(); i++) {
+            if (i.key()[0] == '$')
+                vars.vars[i.key()] = *i;
+        }
+        variables.push_back(vars);
+    }
     if (object["variables"].isObject()) {
         variables.push_back(Variables(object["variables"].toObject()));
     } else if (object["variables"].isArray()) {
@@ -34,8 +41,7 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
                 QJsonObject io = i->toObject();
                 MCGUIVariableExtendComponent el;
                 QString cName = i.key();
-                int j = cName.indexOf("@");
-                if (j < 0) {
+                if (!cName.contains("@") && !cName.startsWith("$")) {
                     MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(io["type"].toString(""));
                     el.name = cName;
                     el.component = MCGUIComponent::createComponentOfType(type, mcNamespace, cName, nullptr, io);
@@ -45,8 +51,8 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
                 }
                 el.object = io;
                 el.mcNamespace = mcNamespace;
-                el.name = cName.mid(0, j);
-                el.extendName = cName.mid(j + 1);
+                el.name = cName;
+                el.name.variableName = cName;
                 controls.push_back(el);
             }
         }
@@ -58,20 +64,29 @@ MCGUIComponent *MCGUIVariableExtendComponent::get(const MCGUIContext *context) {
         return component;
     if (context == nullptr)
         return nullptr;
-    QString eName = extendName.get(context);
+    QString fName = name.get(context);
+    if (components.contains(fName))
+        return components[fName];
+    int i = fName.indexOf("@");
+    MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(object["type"].toString(""));
+    if (i < 0) {
+        MCGUIComponent *c = MCGUIComponent::createComponentOfType(type, mcNamespace, fName, nullptr, object);
+        components[fName] = c;
+        return c;
+    }
+    MCGUIVariable<QString> _eName (fName.mid(i + 1));
+    QString eName = _eName.get(context);
+    QString name = fName.mid(0, i);
     if (!eName.contains("."))
         eName = mcNamespace + "." + eName;
-    if (components.contains(eName))
-        return components[eName];
     if (context->components.contains(eName)) {
         MCGUIComponent *extendComponent = context->components[eName];
         if (extendComponent == nullptr)
             return nullptr;
-        MCGUIComponent::Type type = MCGUIComponent::getTypeFromString(object["type"].toString(""));
         if (type == MCGUIComponent::Type::UNKNOWN)
             type = extendComponent->type;
         MCGUIComponent *c = MCGUIComponent::createComponentOfType(type, mcNamespace, name, extendComponent, object);
-        components[eName] = c;
+        components[fName] = c;
         return c;
     }
     return nullptr;
@@ -440,8 +455,8 @@ MCGUIComponentImage::MCGUIComponentImage(const QString &mcNamespace, const QStri
 }
 
 MCGUIComponentInputPanel::MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::INPUT_PANEL, base, object),
-    MCGUIBaseInputComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::INPUT_PANEL, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object) {
     //
 }
 

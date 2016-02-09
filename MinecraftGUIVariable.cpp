@@ -220,8 +220,9 @@ MCGUIComponent* MCGUIControlVariable::get(MCGUIContext *context, MCGUIComponent 
     if (ownerComponent == nullptr)
         return nullptr;
     for (MCGUIVariableExtendComponent &child : ownerComponent->controls) {
-        if (child.name == componentName)
-            return child.get(context);
+        MCGUIComponent *c = child.get(context);
+        if (c != nullptr && c->name == componentName)
+            return c;
     }
     for (MCGUIVariableExtendComponent &child : ownerComponent->controls) {
         MCGUIComponent *r = get(context, child.get(context));

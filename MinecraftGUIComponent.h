@@ -16,8 +16,8 @@ class MinecraftJSONParser;
 struct MCGUIVariableExtendComponent {
     MCGUIComponent* component = nullptr;
     QJsonObject object;
-    QString name, mcNamespace;
-    MCGUIVariable<QString> extendName;
+    QString mcNamespace;
+    MCGUIVariable<QString> name;
     QMap<QString, MCGUIComponent*> components;
 
     MCGUIComponent *get(const MCGUIContext *context);
@@ -34,9 +34,14 @@ struct MCGUIComponent {
         QString requires;
         QMap<QString, QJsonValue> vars;
 
+        Variables() {
+            //
+        }
+
         Variables(QJsonObject const &o);
 
     };
+
 
     QString mcNamespace;
     QString name;
@@ -389,12 +394,9 @@ struct MCGUIComponentImage : public MCGUILayoutComponent, public MCGUIBaseContro
 
 };
 
-struct MCGUIComponentInputPanel : public MCGUIComponent, public MCGUIBaseInputComponent {
+struct MCGUIComponentInputPanel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent {
 
     MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
-
-    virtual Vec2 getPos(MCGUIContext *context) { return {0.f, 0.f}; }
-    virtual Vec2 calculateSize(MCGUIContext *context) { return {0.f, 0.f}; }
 
 };
 

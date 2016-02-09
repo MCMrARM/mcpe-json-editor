@@ -1,5 +1,6 @@
 #include "MinecraftGUIContext.h"
 #include "MinecraftGUIComponent.h"
+#include <QDebug>
 
 void MCGUIContext::enter(MCGUIComponent *component) {
     componentStack.push_back(component);
@@ -12,6 +13,7 @@ void MCGUIContext::enter(MCGUIComponent *component) {
         }
         auto& vars = varSet.vars;
         for (auto it = vars.begin(); it != vars.end(); it++) {
+            qDebug() << "Set variable:" << it.key() << "=" << it->toString("");
             if (variables.contains(it.key()))
                 map[it.key()] = variables[it.key()];
             else
@@ -24,6 +26,7 @@ void MCGUIContext::enter(MCGUIComponent *component) {
 void MCGUIContext::exit() {
     QMap<QString, QJsonValue>& map = prevVariables.last();
     for (auto it = map.begin(); it != map.end(); it++) {
+        qDebug() << "Undo set variable:" << it.key();
         if (it->isUndefined())
             variables.remove(it.key());
         else
