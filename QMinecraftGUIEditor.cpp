@@ -159,6 +159,10 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
     if (component->base != nullptr)
         qDebug() << "@" << component->base->mcNamespace << "." << component->base->name;
     context.enter(component);
+    if (component->ignored.get(&context)) {
+        context.exit();
+        return nullptr;
+    }
     QSGNode *ret = nullptr;
     Vec2 pos = component->getPos(&context);
     pos.x += off.x;
@@ -172,6 +176,10 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
     if (MCGUIIsOfBaseType(component, Control)) {
         MCGUIBaseControl *control = MCGUICastToType(component, MCGUIBaseControl);
         layer += control->layer.get(&context);
+        if (!control->visible.get(&context)) {
+            context.exit();
+            return nullptr;
+        }
     }
 
     switch (component->type) {
