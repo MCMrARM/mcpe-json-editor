@@ -70,8 +70,8 @@ ApplicationWindow {
             id: guiEditor
             objectName: "gui_editor"
 
-            screenWidth: Units.dp(320)
-            screenHeight: Units.dp(240)
+            screenWidth: 320
+            screenHeight: 240
 
             anchors {
                 left: sidebar.right
@@ -87,7 +87,12 @@ ApplicationWindow {
                 iconName: "action/settings"
                 text: "Display settings"
 
-                onTriggered: displaySettingsDialog.show()
+                onTriggered: {
+                    guiEditorWidth.text = guiEditor.screenWidth
+                    guiEditorHeight.text = guiEditor.screenHeight
+                    guiEditorPixelSize.text = guiEditor.dpSize
+                    displaySettingsDialog.show()
+                }
             },
 
             Action {
@@ -107,7 +112,52 @@ ApplicationWindow {
         id: displaySettingsDialog
         title: "Display settings"
 
+        Grid {
+            columns: 2
+            spacing: Units.dp(8)
+
+            Rectangle {
+                width: Units.dp(120)
+                height: Units.dp(40)
+                TextField {
+                    id: guiEditorWidth
+                    width: parent.width
+                    anchors.bottom: parent.bottom
+                    placeholderText: "Screen width"
+                    floatingLabel: true
+                }
+            }
+            Rectangle {
+                width: Units.dp(120)
+                height: Units.dp(40)
+                TextField {
+                    id: guiEditorHeight
+                    width: parent.width
+                    anchors.bottom: parent.bottom
+                    placeholderText: "Screen height"
+                    floatingLabel: true
+                }
+            }
+        }
+        Rectangle {
+            width: Units.dp(240)
+            height: Units.dp(40)
+            TextField {
+                id: guiEditorPixelSize
+                width: parent.width
+                anchors.bottom: parent.bottom
+                placeholderText: "Pixel size"
+                floatingLabel: true
+            }
+        }
+
         positiveButtonText: "Done"
         negativeButton.visible: false
+
+        onAccepted: {
+            guiEditor.screenWidth = parseInt(guiEditorWidth.text)
+            guiEditor.screenHeight = parseInt(guiEditorHeight.text)
+            guiEditor.dpSize = parseInt(guiEditorPixelSize.text)
+        }
     }
 }
