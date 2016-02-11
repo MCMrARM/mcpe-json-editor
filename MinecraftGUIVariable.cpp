@@ -220,6 +220,14 @@ void MCGUIVariable<MCGUIDirection>::setVal(QJsonValue val, MCGUIDirection def) {
         this->val = def;
 }
 template <>
+void MCGUIVariable<MCGUIFontSize>::setVal(QJsonValue val, MCGUIFontSize def) {
+    QString v = val.toString("");
+    if (v == "small")
+        this->val = MCGUIFontSize::SMALL;
+    else
+        this->val = def;
+}
+template <>
 void MCGUIVariable<MCGUIDataBinding::Type>::setVal(QJsonValue val, MCGUIDataBinding::Type def) {
     QString v = val.toString("");
     if (v == "global")

@@ -11,6 +11,7 @@
 #include <QMinecraftUtils.h>
 #include <assert.h>
 #include "Vec4.h"
+#include "QSGColorTextureMaterial.h"
 
 QMinecraftGUIEditor::QMinecraftGUIEditor(QQuickItem *parent) : QQuickItem(parent), mScreenWidth(100.f), mScreenHeight(100.f) {
     setFlag(ItemHasContents, true);
@@ -203,7 +204,18 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         TextureInfo *tex = getTexture(image->texture.get(&context));
         assert(tex != nullptr);
 
-        QSGTextureMaterial *material = new QSGTextureMaterial();
+        MCGUIColor color = image->color.get(&context);
+
+        QSGTextureMaterial *material;
+        if (color.r != 1.f || color.g != 1.f || color.b != 1.f || color.a != 1.f) {
+            QSGColorTextureMaterial *colorMaterial = new QSGColorTextureMaterial();
+            QColor qcolor;
+            qcolor.setRgbF(color.r, color.g, color.b, color.a);
+            colorMaterial->setColor(qcolor);
+            material = colorMaterial;
+        } else {
+            material = new QSGTextureMaterial();
+        }
         material->setTexture(tex->texture);
         Vec2 uv = image->uv.get(&context);
         Vec2 uvSize = image->uvSize.get(&context);
@@ -237,17 +249,18 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
         MCGUIComponentLabel *label = (MCGUIComponentLabel*) component;
         MCGUIColor color = label->color.get(&context);
         QString text = label->text.get(&context);
+        float fontSize = label->fontSize.get(&context) == MCGUIFontSize::SMALL ? 0.5f : 1.f;
         QColor qcolor;
         qcolor.setRgbF(color.r, color.g, color.b, color.a);
         Vec2 textOff = MCGUIGetAnchorPoint(label->calculateSize(&context), label->alignment.get(&context));
-        textOff = textOff - MCGUIGetAnchorPoint({mFont.calculateWidth(text), mFont.getCharHeight()}, label->alignment.get(&context));
+        textOff = textOff - MCGUIGetAnchorPoint({mFont.calculateWidth(text) * fontSize, mFont.getCharHeight() * fontSize}, label->alignment.get(&context));
         textOff = (textOff * mPixelSize).floor();
-        QSGNode *node = mFont.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor, mPixelSize);
+        QSGNode *node = mFont.build({pos.x + textOff.x, pos.y + textOff.y}, text, qcolor, mPixelSize * fontSize);
         node->setFlag(QSGNode::OwnedByParent);
         if (label->shadow.get(&context)) {
             QColor qcolor2;
             qcolor2.setRgbF(color.r / 4, color.g / 4, color.b / 4, color.a);
-            QSGNode *node2 = mFont.build({pos.x + textOff.x + mPixelSize, pos.y + textOff.y + mPixelSize}, text, qcolor2, mPixelSize);
+            QSGNode *node2 = mFont.build({pos.x + textOff.x + mPixelSize * fontSize, pos.y + textOff.y + mPixelSize * fontSize}, text, qcolor2, mPixelSize * fontSize);
             node2->setFlag(QSGNode::OwnedByParent);
             node2->appendChildNode(node);
             node = node2;

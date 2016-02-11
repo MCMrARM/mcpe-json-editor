@@ -11,6 +11,7 @@ const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
 MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, bool parseDataBindings, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name), type(type) {
     if (base != nullptr) {
+        this->base = base;
         ignored = base->ignored;
         bindings = base->bindings;
         variables = base->variables;
@@ -306,10 +307,12 @@ Vec2 MCGUILayoutComponent::getPos(MCGUIContext *context) {
 }
 
 MCGUIBaseLayoutComponent::MCGUIBaseLayoutComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
-    MCGUILayoutOffset off;
-    off.x.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_X, 1.f});
-    off.y.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_Y, 1.f});
-    size.set(off);
+    {
+        MCGUILayoutOffset off;
+        off.x.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_X, 1.f});
+        off.y.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_Y, 1.f});
+        size = off;
+    }
     MCGUICopyBaseProperties(base, LayoutComponent);
     MCGUIProperty(anchorFrom, anchor_from);
     MCGUIProperty(anchorTo, anchor_to);
@@ -343,7 +346,7 @@ MCGUIBaseTextComponent::MCGUIBaseTextComponent(const MCGUIComponent &component, 
     MCGUIProperty(color, color);
     MCGUIProperty(alpha, alpha);
     MCGUIProperty(shadow, shadow);
-    //MCGUIProperty(fontSize, font_size);
+    MCGUIProperty(fontSize, font_size);
     MCGUIProperty(wrap, wrap);
     MCGUIProperty(clip, clip);
     MCGUIProperty(localize, localize);
@@ -357,7 +360,7 @@ MCGUIBaseCarouselTextComponent::MCGUIBaseCarouselTextComponent(const MCGUICompon
     MCGUIProperty(color, color);
     MCGUIProperty(alpha, alpha);
     MCGUIProperty(shadow, shadow);
-    //MCGUIProperty(fontSize, font_size);
+    MCGUIProperty(fontSize, font_size);
     MCGUIProperty(wrap, wrap);
     MCGUIProperty(clip, clip);
     MCGUIProperty(localize, localize);

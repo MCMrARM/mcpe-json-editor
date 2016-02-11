@@ -45,7 +45,7 @@ struct MCGUIComponent {
 
     QString mcNamespace;
     QString name;
-    MCGUIComponent* base = nullptr;
+    const MCGUIComponent* base = nullptr;
     Type type;
     MCGUIVariable<bool> ignored = false;
     QList<Variables> variables;
@@ -195,6 +195,12 @@ struct MCGUIColor {
 
 };
 
+enum class MCGUIFontSize {
+
+    NORMAL, SMALL
+
+};
+
 struct MCGUIBaseTextComponent {
 
     MCGUIVariable<QString> text;
@@ -202,7 +208,7 @@ struct MCGUIBaseTextComponent {
     MCGUIVariable<MCGUIColor> color = MCGUIColor::WHITE;
     MCGUIVariable<float> alpha = 1.f;
     MCGUIVariable<bool> shadow = false;
-    //MCGUIVariable<MCGUIFontSize> fontSize;
+    MCGUIVariable<MCGUIFontSize> fontSize;
     MCGUIVariable<bool> wrap = false;
     MCGUIVariable<bool> clip = false;
     MCGUIVariable<bool> localize = true;
@@ -219,7 +225,7 @@ struct MCGUIBaseCarouselTextComponent {
     MCGUIVariable<MCGUIColor> color = MCGUIColor::WHITE;
     MCGUIVariable<float> alpha = 1.f;
     MCGUIVariable<bool> shadow = false;
-    //MCGUIVariable<MCGUIFontSize> fontSize;
+    MCGUIVariable<MCGUIFontSize> fontSize;
     MCGUIVariable<bool> wrap = false;
     MCGUIVariable<bool> clip = false;
     MCGUIVariable<bool> localize = true;
@@ -491,6 +497,7 @@ struct MCGUIUnknownComponent : public MCGUIComponent {
     el->type == MCGUIComponent::Type::GRID || \
     el->type == MCGUIComponent::Type::GRID_ITEM || \
     el->type == MCGUIComponent::Type::IMAGE || \
+    el->type == MCGUIComponent::Type::INPUT_PANEL || \
     el->type == MCGUIComponent::Type::LABEL || \
     el->type == MCGUIComponent::Type::PANEL || \
     el->type == MCGUIComponent::Type::SCROLLBAR || \
