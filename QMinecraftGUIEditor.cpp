@@ -80,6 +80,8 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
             context.screenSize = {mScreenWidth, mScreenHeight};
 
             context.variables["$win10_edition"] = QJsonValue(true);
+            context.variables["$not_trial"] = QJsonValue(true);
+            context.variables["$not_education_edition"] = QJsonValue(true);
             context.globalBindings["#button_a_description"] = "Select";
             context.globalBindings["#button_b_description"] = "Exit";
 

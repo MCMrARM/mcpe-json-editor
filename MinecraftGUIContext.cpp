@@ -9,6 +9,7 @@ void MCGUIContext::enter(MCGUIComponent *component) {
     QMap<QString, QJsonValue>& map = prevVariables.last();
     for (MCGUIComponent::Variables varSet : component->variables) {
         if (varSet.requires.length() > 0) {
+            qDebug() << "Requires:" << varSet.requires << "( met:" << (variables.count(varSet.requires) > 0) << ")";
             if (variables.count(varSet.requires) <= 0)
                 continue;
         }

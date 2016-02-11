@@ -75,6 +75,8 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
     }
 }
 
+#include <QDebug>
+
 MCGUIComponent *MCGUIVariableExtendComponent::get(MCGUIContext *context) {
     if (component != nullptr)
         return component;
@@ -91,6 +93,7 @@ MCGUIComponent *MCGUIVariableExtendComponent::get(MCGUIContext *context) {
         return c;
     }
     MCGUIVariable<QString> _eName (fName.mid(i + 1));
+    _eName.variableName = _eName.val;
     QString eName = _eName.get(context);
     QString name = fName.mid(0, i);
     if (!eName.contains("."))
