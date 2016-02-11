@@ -79,7 +79,7 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
         QSGSimpleRectNode *container = new QSGSimpleRectNode();
         container->setColor(Qt::black);
         container->setFlag(QSGNode::OwnedByParent);
-        container->setRect(5.f, 5.f, screenWidth(), screenHeight());
+        container->setRect(5.f, 5.f, screenWidth() * mPixelSize, screenHeight() * mPixelSize);
         if (mEditComponent != nullptr) {
             qDebug() << "Building component" << mEditComponent->mcNamespace << mEditComponent->name;
 
@@ -93,7 +93,7 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
             context.globalBindings["#button_b_description"] = "Exit";
 
             QMap<int, QList<QSGNode*>> nodes;
-            buildNode(nodes, context, mEditComponent, {5.f, 5.f}, 0);
+            buildNode(nodes, context, mEditComponent, {5.f / mPixelSize, 5.f / mPixelSize}, 0);
             for (QList<QSGNode*> &list : nodes) {
                 for (QSGNode *node : list) {
                     container->appendChildNode(node);
