@@ -6,14 +6,16 @@
 
 const MCGUIColor MCGUIColor::WHITE = {1.f, 1.f, 1.f, 1.f};
 
-MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
+#define MCGUIProperty(name, jsonName) name.setJSON(object, #jsonName, component.bindings);
+
+MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, bool parseDataBindings, const MCGUIComponent *base, const QJsonObject &object) :
     mcNamespace(mcNamespace), name(name), type(type) {
     if (base != nullptr) {
         ignored = base->ignored;
+        bindings = base->bindings;
         variables = base->variables;
         controls = base->controls;
     }
-    ignored.setJSON(object["ignored"], false);
     {
         Variables vars;
         for (auto i = object.begin(); i != object.end(); i++) {
@@ -31,6 +33,20 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
                 variables.push_back(Variables(v.toObject()));
         }
     }
+    if (parseDataBindings) {
+        for (QJsonValue v : object["bindings"].toArray()) {
+            if (!v.isObject())
+                continue;
+
+            QJsonObject o = v.toObject();
+            MCGUIDataBinding binding;
+            binding.name.setJSON(o["binding_name"], "");
+            binding.nameOverride.setJSON(o["binding_name_override"], "");
+            binding.type.setJSON(o["binding_type"], MCGUIDataBinding::Type::GLOBAL);
+            bindings.push_back(binding);
+        }
+    }
+    ignored.setJSON(object, "ignored", bindings);
     if (object["controls"].isArray()) {
         for (QJsonValue v : object["controls"].toArray()) {
             if (!v.isObject())
@@ -59,7 +75,7 @@ MCGUIComponent::MCGUIComponent(const QString &mcNamespace, const QString &name, 
     }
 }
 
-MCGUIComponent *MCGUIVariableExtendComponent::get(const MCGUIContext *context) {
+MCGUIComponent *MCGUIVariableExtendComponent::get(MCGUIContext *context) {
     if (component != nullptr)
         return component;
     if (context == nullptr)
@@ -179,24 +195,19 @@ MCGUIComponent* MCGUIComponent::createComponentOfType(Type type, const QString &
 
 MCGUIBaseControl::MCGUIBaseControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : clipOffset({0.f, 0.f}) {
     MCGUICopyBaseProperties(base, Control);
-    visible.setJSON(object["visible"]);
-    layer.setJSON(object["layer"]);
-    clipsChildren.setJSON(object["clips_children"]);
-    clipOffset.setJSON(object["clip_offset"]);
-    allowClipping.setJSON(object["allow_clipping"]);
-    propertyBag.setJSON(object["property_bag"]);
+    MCGUIProperty(visible, visible);
+    MCGUIProperty(layer, layer);
+    MCGUIProperty(clipsChildren, clips_children);
+    MCGUIProperty(clipOffset, clip_offset);
+    MCGUIProperty(allowClipping, allow_clipping);
+    MCGUIProperty(propertyBag, property_bag);
 }
 
 MCGUIBaseButtonComponent::MCGUIBaseButtonComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, ButtonComponent);
-    defaultControl.setJSON(object["default_control"]);
-    hoverControl.setJSON(object["hover_control"]);
-    pressedControl.setJSON(object["pressed_control"]);
-}
-
-MCGUIBaseDataBindingComponent::MCGUIBaseDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
-    MCGUICopyBaseProperties(base, DataBindingComponent);
-
+    MCGUIProperty(defaultControl, default_control);
+    MCGUIProperty(hoverControl, hover_control);
+    MCGUIProperty(pressedControl, pressed_control);
 }
 
 float MCGUILayoutAxis::get(Vec2 componentSize) {
@@ -297,206 +308,205 @@ MCGUIBaseLayoutComponent::MCGUIBaseLayoutComponent(const MCGUIComponent &compone
     off.y.components.push_back({MCGUILayoutAxis::Component::Unit::PERCENT_Y, 1.f});
     size.set(off);
     MCGUICopyBaseProperties(base, LayoutComponent);
-    anchorFrom.setJSON(object["anchor_from"]);
-    anchorTo.setJSON(object["anchor_to"]);
-    draggable.setJSON(object["draggable"]);
-    followsCursor.setJSON(object["follows_cursor"]);
-    offset.setJSON(object["offset"]);
-    size.setJSON(object["size"]);
+    MCGUIProperty(anchorFrom, anchor_from);
+    MCGUIProperty(anchorTo, anchor_to);
+    MCGUIProperty(draggable, draggable);
+    MCGUIProperty(followsCursor, follows_cursor);
+    MCGUIProperty(offset, offset);
+    MCGUIProperty(size, size);
 }
 
 MCGUIBaseInputComponent::MCGUIBaseInputComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, InputComponent);
-    scrollReport.setJSON(object["scroll_report"]);
-    alwaysListenToInput.setJSON(object["always_listen_to_input"]);
-    focusEnabled.setJSON(object["focus_enabled"]);
-    defaultFocusPrecedence.setJSON(object["default_focus_precedence"]);
-    alwaysHandlePointer.setJSON(object["always_handle_pointer"]);
-    contentPanel.setJSON(object["content_panel"]);
+    MCGUIProperty(scrollReport, scroll_report);
+    MCGUIProperty(alwaysListenToInput, always_listen_to_input);
+    MCGUIProperty(focusEnabled, focus_enabled);
+    MCGUIProperty(defaultFocusPrecedence, default_focus_precedence);
+    MCGUIProperty(alwaysHandlePointer, always_handle_pointer);
+    MCGUIProperty(contentPanel, content_panel);
 }
 
 MCGUIBaseSoundComponent::MCGUIBaseSoundComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, SoundComponent);
-    soundName.setJSON(object["sound_name"]);
-    soundVolume.setJSON(object["sound_volume"]);
-    soundPitch.setJSON(object["sound_pitch"]);
+    MCGUIProperty(soundName, sound_name);
+    MCGUIProperty(soundVolume, sound_volume);
+    MCGUIProperty(soundPitch, sound_pitch);
 }
 
 MCGUIBaseTextComponent::MCGUIBaseTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, TextComponent);
-    text.setJSON(object["text"]);
-    alignment.setJSON(object["alignment"]);
-    color.setJSON(object["color"]);
-    alpha.setJSON(object["alpha"]);
-    shadow.setJSON(object["shadow"]);
-    //fontSize.setJSON(object["font_size"]);
-    wrap.setJSON(object["wrap"]);
-    clip.setJSON(object["clip"]);
-    localize.setJSON(object["localize"]);
-    runeFont.setJSON(object["rune_font"]);
+    MCGUIProperty(text, text);
+    MCGUIProperty(alignment, alignment);
+    MCGUIProperty(color, color);
+    MCGUIProperty(alpha, alpha);
+    MCGUIProperty(shadow, shadow);
+    //MCGUIProperty(fontSize, font_size);
+    MCGUIProperty(wrap, wrap);
+    MCGUIProperty(clip, clip);
+    MCGUIProperty(localize, localize);
+    MCGUIProperty(runeFont, rune_font);
 }
 
 MCGUIBaseCarouselTextComponent::MCGUIBaseCarouselTextComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, CarouselTextComponent);
-    text.setJSON(object["text"]);
-    alignment.setJSON(object["alignment"]);
-    color.setJSON(object["color"]);
-    alpha.setJSON(object["alpha"]);
-    shadow.setJSON(object["shadow"]);
-    //fontSize.setJSON(object["font_size"]);
-    wrap.setJSON(object["wrap"]);
-    clip.setJSON(object["clip"]);
-    localize.setJSON(object["localize"]);
-    alwaysRotate.setJSON(object["always_rotate"]);
-    rotateSpeed.setJSON(object["rotate_speed"]);
-    hoverColor.setJSON(object["hover_color"]);
-    hoverAlpha.setJSON(object["hover_alpha"]);
-    pressedColor.setJSON(object["pressed_color"]);
-    pressedAlpha.setJSON(object["pressed_alpha"]);
+    MCGUIProperty(text, text);
+    MCGUIProperty(alignment, alignment);
+    MCGUIProperty(color, color);
+    MCGUIProperty(alpha, alpha);
+    MCGUIProperty(shadow, shadow);
+    //MCGUIProperty(fontSize, font_size);
+    MCGUIProperty(wrap, wrap);
+    MCGUIProperty(clip, clip);
+    MCGUIProperty(localize, localize);
+    MCGUIProperty(alwaysRotate, always_rotate);
+    MCGUIProperty(rotateSpeed, rotate_speed);
+    MCGUIProperty(hoverColor, hover_color);
+    MCGUIProperty(hoverAlpha, hover_alpha);
+    MCGUIProperty(pressedColor, pressed_color);
+    MCGUIProperty(pressedAlpha, pressed_alpha);
 }
 
 MCGUIBaseTextEditComponent::MCGUIBaseTextEditComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, TextEditComponent);
-    textType.setJSON(object["text_type"]);
-    maxLength.setJSON(object["max_length"]);
-    enabled.setJSON(object["enabled"]);
-    textControl.setJSON(object["text_control"]);
+    MCGUIProperty(textType, text_type);
+    MCGUIProperty(maxLength, max_length);
+    MCGUIProperty(enabled, enabled);
+    MCGUIProperty(textControl, text_control);
 }
 
 MCGUIBaseGridComponent::MCGUIBaseGridComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : gridDimensions({0, 0}) {
     MCGUICopyBaseProperties(base, GridComponent);
-    gridDimensions.setJSON(object["grid_dimensions"]);
-    gridDimensionBinding.setJSON(object["grid_dimension_binding"]);
-    collectionName.setJSON(object["collection_name"]);
-    gridRescalingType.setJSON(object["grid_rescaling_type"]);
-    maximumGridItems.setJSON(object["maximum_grid_items"]);
-    gridItemTemplate.setJSON(object["grid_item_template"]);
+    MCGUIProperty(gridDimensions, grid_dimensions);
+    MCGUIProperty(gridDimensionBinding, grid_dimension_binding);
+    MCGUIProperty(collectionName, collection_name);
+    MCGUIProperty(gridRescalingType, grid_rescaling_type);
+    MCGUIProperty(maximumGridItems, maximum_grid_items);
+    MCGUIProperty(gridItemTemplate, grid_item_template);
 }
 
 MCGUIBaseGridItemComponent::MCGUIBaseGridItemComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : gridPosition({0, 0}) {
     MCGUICopyBaseProperties(base, GridItemComponent);
-    gridPosition.setJSON(object["grid_position"]);
+    MCGUIProperty(gridPosition, grid_position);
 }
 
 MCGUIBaseSpriteComponent::MCGUIBaseSpriteComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) : uv({0.f, 0.f}), uvSize({0.f, 0.f}), ninesliceSize({0.f, 0.f, 0.f, 0.f}) {
     MCGUICopyBaseProperties(base, SpriteComponent);
-    texture.setJSON(object["texture"]);
-    uv.setJSON(object["uv"]);
-    uvSize.setJSON(object["uv_size"]);
-    alpha.setJSON(object["alpha"]);
-    color.setJSON(object["color"]);
-    ninesliceSize.setJSON(object["nineslice_size"]);
-    tiled.setJSON(object["tiled"]);
-    clipDirection.setJSON(object["clip_direction"]);
-    clipRatio.setJSON(object["clip_ratio"]);
+    MCGUIProperty(texture, texture);
+    MCGUIProperty(uv, uv);
+    MCGUIProperty(uvSize, uv_size);
+    MCGUIProperty(alpha, alpha);
+    MCGUIProperty(color, color);
+    MCGUIProperty(ninesliceSize, nineslice_size);
+    MCGUIProperty(tiled, tiled);
+    MCGUIProperty(clipDirection, clip_direction);
+    MCGUIProperty(clipRatio, clip_ratio);
 }
 
 MCGUIBaseCustomRendererComponent::MCGUIBaseCustomRendererComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, CustomRendererComponent);
-    renderer.setJSON(object["renderer"]);
+    MCGUIProperty(renderer, renderer);
 }
 
 MCGUIBaseScrollbarComponent::MCGUIBaseScrollbarComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, ScrollbarComponent);
-    scrollbarBoxTrackButton.setJSON(object["scrollbar_box_track_button"]);
-    scrollbarTouchButton.setJSON(object["scrollbar_touch_button"]);
-    dampening.setJSON(object["dampening"]);
-    scrollSpeed.setJSON(object["scroll_speed"]);
-    scrollbarBox.setJSON(object["scrollbar_box"]);
+    MCGUIProperty(scrollbarBoxTrackButton, scrollbar_box_track_button);
+    MCGUIProperty(scrollbarTouchButton, scrollbar_touch_button);
+    MCGUIProperty(dampening, dampening);
+    MCGUIProperty(scrollSpeed, scroll_speed);
+    MCGUIProperty(scrollbarBox, scrollbar_box);
 }
 
 MCGUIBaseTabComponent::MCGUIBaseTabComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object) {
     MCGUICopyBaseProperties(base, TabComponent);
-    tabGroup.setJSON(object["tab_group"]);
-    tabIndex.setJSON(object["tab_index"]);
-    tabContent.setJSON(object["tab_content"]);
+    MCGUIProperty(tabGroup, tab_group);
+    MCGUIProperty(tabIndex, tab_index);
+    MCGUIProperty(tabContent, tab_content);
 }
 
 MCGUIComponentButton::MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::BUTTON, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::BUTTON, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentCarouselLabel::MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::CAROUSEL_LABEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::CAROUSEL_LABEL, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseCarouselTextComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentCustom::MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::CUSTOM, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::CUSTOM, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseCustomRendererComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentEditBox::MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::EDIT_BOX, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::EDIT_BOX, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseTextEditComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentGrid::MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::GRID, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseGridComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::GRID, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseGridComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentGridItem::MCGUIComponentGridItem(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::GRID_ITEM, base, object),
+    MCGUILayoutComponent(mcNamespace, name, Type::GRID_ITEM, false, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseGridItemComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentImage::MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::IMAGE, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::IMAGE, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseSpriteComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentInputPanel::MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::INPUT_PANEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::INPUT_PANEL, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentLabel::MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::LABEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::LABEL, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseTextComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentPanel::MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::PANEL, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::PANEL, true, base, object),
+    MCGUIBaseControl(*this, base, object) {
     //
 }
 
 MCGUIComponentScreen::MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::SCREEN, base, object),
-    MCGUIBaseDataBindingComponent(*this, base, object) {
+    MCGUIComponent(mcNamespace, name, Type::SCREEN, true, base, object) {
     //
 }
 
 MCGUIComponentScrollbar::MCGUIComponentScrollbar(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR, base, object),
+    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR, false, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseScrollbarComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentScrollbarBox::MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR_BOX, base, object),
+    MCGUILayoutComponent(mcNamespace, name, Type::SCROLLBAR_BOX, false, base, object),
     MCGUIBaseControl(*this, base, object), MCGUIBaseInputComponent(*this, base, object) {
     //
 }
 
 MCGUIComponentTab::MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUILayoutComponent(mcNamespace, name, Type::TAB, base, object),
-    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseDataBindingComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
+    MCGUILayoutComponent(mcNamespace, name, Type::TAB, true, base, object),
+    MCGUIBaseControl(*this, base, object), MCGUIBaseButtonComponent(*this, base, object), MCGUIBaseInputComponent(*this, base, object), MCGUIBaseSoundComponent(*this, base, object), MCGUIBaseTabComponent(*this, base, object) {
     //
 }
 
 MCGUIUnknownComponent::MCGUIUnknownComponent(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, const QJsonObject &object) :
-    MCGUIComponent(mcNamespace, name, Type::UNKNOWN, base, object), object(object) {
+    MCGUIComponent(mcNamespace, name, Type::UNKNOWN, false, base, object), object(object) {
     //
 }

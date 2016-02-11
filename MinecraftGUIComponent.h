@@ -20,7 +20,7 @@ struct MCGUIVariableExtendComponent {
     MCGUIVariable<QString> name;
     QMap<QString, MCGUIComponent*> components;
 
-    MCGUIComponent *get(const MCGUIContext *context);
+    MCGUIComponent *get(MCGUIContext *context);
 };
 
 struct MCGUIComponent {
@@ -47,11 +47,12 @@ struct MCGUIComponent {
     QString name;
     MCGUIComponent* base = nullptr;
     Type type;
-    MCGUIVariable<bool> ignored;
+    MCGUIVariable<bool> ignored = false;
     QList<Variables> variables;
+    QList<MCGUIDataBinding> bindings;
     QList<MCGUIVariableExtendComponent> controls;
 
-    MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object);
+    MCGUIComponent(const QString &mcNamespace, const QString &name, Type type, bool parseDataBindings, const MCGUIComponent *base, const QJsonObject &object);
 
     static Type getTypeFromString(const QString& type);
     static MCGUIComponent* createComponentOfType(Type type, const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject object);
@@ -71,14 +72,6 @@ struct MCGUIBaseControl {
     MCGUIVariable<QJsonObject> propertyBag;
 
     MCGUIBaseControl(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
-
-};
-
-struct MCGUIBaseDataBindingComponent {
-
-    QList<MCGUIDataBinding> bindings;
-
-    MCGUIBaseDataBindingComponent(const MCGUIComponent &component, const MCGUIComponent *base, const QJsonObject &object);
 
 };
 
@@ -339,8 +332,8 @@ struct MCGUIBaseTabComponent {
 
 struct MCGUILayoutComponent : public MCGUIComponent, public MCGUIBaseLayoutComponent {
 
-    MCGUILayoutComponent(const QString &mcNamespace, const QString &name, Type type, const MCGUIComponent *base, const QJsonObject &object) :
-        MCGUIComponent(mcNamespace, name, type, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
+    MCGUILayoutComponent(const QString &mcNamespace, const QString &name, Type type, bool parseDataBindings, const MCGUIComponent *base, const QJsonObject &object) :
+        MCGUIComponent(mcNamespace, name, type, parseDataBindings, base, object), MCGUIBaseLayoutComponent(*this, base, object) {
         //
     }
 
@@ -351,31 +344,31 @@ struct MCGUILayoutComponent : public MCGUIComponent, public MCGUIBaseLayoutCompo
 
 };
 
-struct MCGUIComponentButton : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
+struct MCGUIComponentButton : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent {
 
     MCGUIComponentButton(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentCarouselLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
+struct MCGUIComponentCarouselLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent, public MCGUIBaseCarouselTextComponent {
 
     MCGUIComponentCarouselLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentCustom : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseCustomRendererComponent {
+struct MCGUIComponentCustom : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseCustomRendererComponent {
 
     MCGUIComponentCustom(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentEditBox : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseTextEditComponent {
+struct MCGUIComponentEditBox : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseInputComponent, public MCGUIBaseTextEditComponent {
 
     MCGUIComponentEditBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentGrid : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseGridComponent {
+struct MCGUIComponentGrid : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseGridComponent {
 
     MCGUIComponentGrid(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
@@ -388,31 +381,31 @@ struct MCGUIComponentGridItem : public MCGUILayoutComponent, public MCGUIBaseCon
 
 };
 
-struct MCGUIComponentImage : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseSpriteComponent {
+struct MCGUIComponentImage : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseSpriteComponent {
 
     MCGUIComponentImage(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentInputPanel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent {
+struct MCGUIComponentInputPanel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseInputComponent {
 
     MCGUIComponentInputPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent, public MCGUIBaseTextComponent {
+struct MCGUIComponentLabel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseTextComponent {
 
     MCGUIComponentLabel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentPanel : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseDataBindingComponent {
+struct MCGUIComponentPanel : public MCGUILayoutComponent, public MCGUIBaseControl {
 
     MCGUIComponentPanel(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
 };
 
-struct MCGUIComponentScreen : public MCGUIComponent, public MCGUIBaseDataBindingComponent {
+struct MCGUIComponentScreen : public MCGUIComponent {
 
     MCGUIComponentScreen(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 
@@ -432,7 +425,7 @@ struct MCGUIComponentScrollbarBox : public MCGUILayoutComponent, public MCGUIBas
     MCGUIComponentScrollbarBox(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 };
 
-struct MCGUIComponentTab : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseDataBindingComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
+struct MCGUIComponentTab : public MCGUILayoutComponent, public MCGUIBaseControl, public MCGUIBaseButtonComponent, public MCGUIBaseInputComponent, public MCGUIBaseSoundComponent, public MCGUIBaseTabComponent {
 
     MCGUIComponentTab(const QString &mcNamespace, const QString &name, const MCGUIComponent *base, QJsonObject const &object);
 

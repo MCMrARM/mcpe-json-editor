@@ -1,5 +1,6 @@
 #include "MinecraftGUIContext.h"
 #include "MinecraftGUIComponent.h"
+#include "MinecraftGUIBindings.h"
 #include <QDebug>
 
 void MCGUIContext::enter(MCGUIComponent *component) {
@@ -48,4 +49,22 @@ Vec2 MCGUIContext::getParentComponentSize() {
         componentSize = screenSize;
     }
     return componentSize;
+}
+
+QJsonValue MCGUIContext::resolveBinding(const MCGUIDataBinding &binding, bool incrementCollectionBindings) {
+    QString name = binding.name.get(this);
+    auto type = binding.type.get(this);
+    if (type == MCGUIDataBinding::Type::GLOBAL) {
+        if (globalBindings.contains(name))
+            return globalBindings[name];
+    } else if (type == MCGUIDataBinding::Type::COLLECTION) {
+        if (collectionBindings.contains(name)) {
+            CollectionBinding &binding = collectionBindings[name];
+            int i = binding.i;
+            if (incrementCollectionBindings)
+                binding.i++;
+            return binding.vals[i - 1];
+        }
+    }
+    return QJsonValue();
 }

@@ -1,8 +1,14 @@
 #pragma once
 
 #include <QString>
+#include <QList>
 #include <QJsonValue>
+#include <QJsonObject>
 #include "MinecraftGUIContext.h"
+
+class MCGUIDataBinding;
+
+const MCGUIDataBinding *_MCGUIVariable_getBinding(const QString &name, const QString &variableName, const QList<MCGUIDataBinding> &dataBindings);
 
 template <typename T>
 class MCGUIVariable {
@@ -13,6 +19,7 @@ private:
 public:
     T val;
     QString variableName;
+    const MCGUIDataBinding *dataBinding = nullptr;
 
     MCGUIVariable() {
         //
@@ -24,12 +31,18 @@ public:
     MCGUIVariable(QJsonValue val, T def) {
         setJSON(val, def);
     }
-    T get(const MCGUIContext *context) {
+    T get(MCGUIContext *context) const {
+        T retVal = val;
         if (context != nullptr && context->variables.contains(variableName)) {
             MCGUIVariable<T> tmpVar (context->variables[variableName], val);
+            retVal = tmpVar.get(context);
+        }
+        if (dataBinding != nullptr && context != nullptr) {
+            QJsonValue v = context->resolveBinding(*dataBinding);
+            MCGUIVariable<T> tmpVar (v, retVal);
             return tmpVar.get(context);
         }
-        return val;
+        return retVal;
     }
     void setAsVariable(QString varName) {
         this->variableName = varName;
@@ -47,6 +60,14 @@ public:
         }
         setVal(val, def);
     }
+    void setJSON(QJsonObject obj, QString name, T def, const QList<MCGUIDataBinding> &dataBindings) {
+        setJSON(obj[name], def);
+        dataBinding = _MCGUIVariable_getBinding(name, variableName, dataBindings);
+    }
+    void setJSON(QJsonObject obj, QString name, const QList<MCGUIDataBinding> &dataBindings) {
+        setJSON(obj, name, val, dataBindings);
+    }
+
 
 };
 

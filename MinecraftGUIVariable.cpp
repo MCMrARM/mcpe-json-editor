@@ -4,8 +4,18 @@
 #include "MinecraftGUIButtonId.h"
 #include <QString>
 #include <QJsonArray>
+#include <QDebug>
 #include "Vec2.h"
 #include "Vec4.h"
+
+const MCGUIDataBinding *_MCGUIVariable_getBinding(const QString &name, const QString &variableName, const QList<MCGUIDataBinding> &dataBindings) {
+    for (const MCGUIDataBinding &binding : dataBindings) {
+        if (binding.nameOverride.val == name || binding.name.val == variableName) {
+            return &binding;
+        }
+    }
+    return nullptr;
+}
 
 template <>
 void MCGUIVariable<bool>::setVal(QJsonValue val, bool def) {
@@ -206,6 +216,18 @@ void MCGUIVariable<MCGUIDirection>::setVal(QJsonValue val, MCGUIDirection def) {
         this->val = MCGUIDirection::DOWN;
     else if (v == "center")
         this->val = MCGUIDirection::CENTER;
+    else
+        this->val = def;
+}
+template <>
+void MCGUIVariable<MCGUIDataBinding::Type>::setVal(QJsonValue val, MCGUIDataBinding::Type def) {
+    QString v = val.toString("");
+    if (v == "global")
+        this->val = MCGUIDataBinding::Type::GLOBAL;
+    else if (v == "collection")
+        this->val = MCGUIDataBinding::Type::COLLECTION;
+    else if (v == "collection_details")
+        this->val = MCGUIDataBinding::Type::COLLECTION_DETAILS;
     else
         this->val = def;
 }
