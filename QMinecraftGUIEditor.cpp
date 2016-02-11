@@ -15,6 +15,9 @@
 
 QMinecraftGUIEditor::QMinecraftGUIEditor(QQuickItem *parent) : QQuickItem(parent), mScreenWidth(100.f), mScreenHeight(100.f) {
     setFlag(ItemHasContents, true);
+    setFlag(ItemAcceptsInputMethod, true);
+    setAcceptHoverEvents(true);
+    setAcceptedMouseButtons(Qt::AllButtons);
 }
 
 void QMinecraftGUIEditor::setEditComponent(QString const &el) {
@@ -52,6 +55,7 @@ QString QMinecraftGUIEditor::editComponentString() {
     return (mEditComponent == nullptr ? "" : (mEditComponent->mcNamespace + "." + mEditComponent->name));
 }
 
+
 QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData *) {
     QSGSimpleRectNode *n = static_cast<QSGSimpleRectNode *>(node);
     if (!n) {
@@ -70,6 +74,8 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
     if (mRebuildComponent) {
         mRebuildComponent = false;
         n->removeAllChildNodes();
+        mouseAreas.clear();
+        pressedArea = nullptr;
         QSGSimpleRectNode *container = new QSGSimpleRectNode();
         container->setColor(Qt::black);
         container->setFlag(QSGNode::OwnedByParent);
@@ -97,7 +103,63 @@ QSGNode *QMinecraftGUIEditor::updatePaintNode(QSGNode *node, UpdatePaintNodeData
         n->appendChildNode(container);
     }
 
+    for (MouseArea &area : mouseAreas) {
+        if (area.defaultNode != nullptr && (area.hovered || area.pressed))
+            area.hoverNode->hide();
+        if (area.hoverNode != nullptr && !area.hovered)
+            area.hoverNode->hide();
+        if (area.pressedNode != nullptr && !area.pressed)
+            area.pressedNode->hide();
+        if (area.pressed) {
+            if (area.pressedNode != nullptr)
+                area.pressedNode->show();
+        } else if (area.hovered) {
+            if (area.hoverNode != nullptr)
+                area.hoverNode->show();
+        } else {
+            if (area.defaultNode != nullptr)
+                area.defaultNode->show();
+        }
+    }
+
     return n;
+}
+
+void QMinecraftGUIEditor::hoverMoveEvent(QHoverEvent *event) {
+    QQuickItem::hoverMoveEvent(event);
+    QPointF pos = event->posF();
+    qreal x = pos.x();
+    qreal y = pos.y();
+    for (MouseArea &area : mouseAreas) {
+        area.hovered = area.inside(x, y);
+    }
+    update();
+}
+
+void QMinecraftGUIEditor::mousePressEvent(QMouseEvent *event) {
+    if (pressedArea != nullptr)
+        return;
+    QPoint pos = event->pos();
+    qreal x = (qreal) pos.x();
+    qreal y = (qreal) pos.y();
+    for (MouseArea &area : mouseAreas) {
+        if (area.inside(x, y)) {
+            area.pressed = true;
+            pressedArea = &area;
+            grabMouse();
+            update();
+            return;
+        }
+    }
+}
+
+void QMinecraftGUIEditor::mouseReleaseEvent(QMouseEvent *event) {
+    if (pressedArea != nullptr) {
+        pressedArea->pressed = false;
+        pressedArea = nullptr;
+        update();
+        ungrabMouse();
+    }
 }
 
 QMinecraftGUIEditor::TextureInfo *QMinecraftGUIEditor::getTexture(QString tex) {
@@ -324,10 +386,47 @@ QSGNode *QMinecraftGUIEditor::buildNode(QMap<int, QList<QSGNode*>> &nodes, MCGUI
 
         nodes[layer].push_back(ret);
 
-        for (auto& control : component->controls) {
-            MCGUIComponent *child = control.get(&context);
-            if (child != nullptr) {
-                buildNode(nodes, context, child, off, layer);
+        if (MCGUIIsOfBaseType(component, ButtonComponent)) {
+            MCGUIBaseButtonComponent *btn = MCGUICastToType(component, MCGUIBaseButtonComponent);
+            QString defaultControl = btn->defaultControl.get(&context).componentName;
+            QString hoverControl = btn->hoverControl.get(&context).componentName;
+            QString pressedControl = btn->pressedControl.get(&context).componentName;
+            MouseArea area;
+            area.area = QRectF(pos.x, pos.y, size.x, size.y);
+            for (auto& control : component->controls) {
+                MCGUIComponent *child = control.get(&context);
+                if (child != nullptr) {
+                    if (child->name == defaultControl || child->name == hoverControl || child->name == pressedControl) {
+                        QMap<int, QList<QSGNode*>> subNodes;
+                        buildNode(subNodes, context, child, off, layer);
+                        QSGNode *container = new QSGNode();
+                        for (QList<QSGNode*> &list : subNodes) {
+                            for (QSGNode *node : list) {
+                                container->appendChildNode(node);
+                            }
+                        }
+                        if (child->name == defaultControl) {
+                            area.defaultNode = new QSGHideableNode(container);
+                            nodes[layer].push_back(&area.defaultNode->realNode);
+                        } else if (child->name == hoverControl) {
+                            area.hoverNode =  new QSGHideableNode(container);
+                            nodes[layer].push_back(&area.hoverNode->realNode);
+                        } else if (child->name == pressedControl) {
+                            area.pressedNode =  new QSGHideableNode(container);
+                            nodes[layer].push_back(&area.pressedNode->realNode);
+                        }
+                    } else {
+                        buildNode(nodes, context, child, off, layer);
+                    }
+                }
+            }
+            mouseAreas.push_back(area);
+        } else {
+            for (auto& control : component->controls) {
+                MCGUIComponent *child = control.get(&context);
+                if (child != nullptr) {
+                    buildNode(nodes, context, child, off, layer);
+                }
             }
         }
     }

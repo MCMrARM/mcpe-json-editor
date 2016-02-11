@@ -1,5 +1,6 @@
 #include "QMinecraftUtils.h"
 
+#include <QSGNode>
 #include <QSGGeometry>
 #include <assert.h>
 #include <QDebug>
@@ -50,4 +51,18 @@ void QMinecraftUtils::setTexturedRectsGeometry(QSGGeometry *geometry, const QLis
         itRects++;
         itUvs++;
     }
+}
+
+QSGHideableNode::QSGHideableNode(QSGNode *node) : node(node) {
+    show();
+}
+
+void QSGHideableNode::show() {
+    if (node->parent() == nullptr)
+        realNode.appendChildNode(node);
+}
+
+void QSGHideableNode::hide() {
+    if (node->parent() == &realNode)
+        realNode.removeChildNode(node);
 }

@@ -12,6 +12,7 @@ class MinecraftJSONParser;
 class MCGUIComponent;
 class MCGUIContext;
 class QSGTexture;
+class QSGHideableNode;
 
 class QMinecraftGUIEditor : public QQuickItem
 {
@@ -39,6 +40,27 @@ class QMinecraftGUIEditor : public QQuickItem
 
     QMap<QString, TextureInfo*> textures;
     TextureInfo *getTexture(QString tex);
+
+    struct HideableNode {
+        //
+    };
+
+    struct MouseArea {
+        QRectF area;
+        bool hovered = false;
+        bool pressed = false;
+        QSGHideableNode *defaultNode = nullptr;
+        QSGHideableNode *hoverNode = nullptr;
+        QSGHideableNode *pressedNode = nullptr;
+
+        bool inside(qreal x, qreal y) {
+            return (x >= area.x() && x <= area.x() + area.width() &&
+                    y >= area.y() && y <= area.y() + area.height());
+        }
+    };
+
+    QList<MouseArea> mouseAreas;
+    MouseArea *pressedArea = nullptr;
 
 public:
     QMinecraftGUIEditor(QQuickItem *parent = 0);
@@ -70,6 +92,10 @@ public:
     void setScreenHeight(qreal val);
 
     void setMinecraftPixelSize(qreal val);
+
+    void hoverMoveEvent(QHoverEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
 
 signals:
     void screenWidthChanged(qreal val);
